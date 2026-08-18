@@ -1,0 +1,1 @@
+- [Supabase server-key compatibility](supabase-key-compatibility.md) — validate the active server key against Auth admin before relying on account mutations.
