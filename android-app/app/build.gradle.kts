@@ -54,12 +54,12 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("androidx.activity:activity-ktx:1.9.2") // <-- lifecycleScope ke liye zaroori
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // Kotlin Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     // Start.io (StartApp) SDK
-    // Pin this SDK so a future release cannot silently raise the required compile SDK.
     implementation("com.startapp:inapp-sdk:5.2.1")
 }
