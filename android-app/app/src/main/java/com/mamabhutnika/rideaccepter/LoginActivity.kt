@@ -10,7 +10,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
+import androidx.lifecycleScope
 import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
@@ -21,6 +21,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnSignup: Button
     private lateinit var tvTrialStatus: TextView
     private lateinit var tvVersion: TextView
+    private lateinit var tvLogo: TextView // <-- Add kiya
     private lateinit var prefs: UserPrefs
     private val api = ApiClient()
 
@@ -29,12 +30,15 @@ class LoginActivity : AppCompatActivity() {
         setContentView(R.layout.activity_login)
 
         prefs = UserPrefs(this)
+        
+        // All views connect karo
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
         btnLogin = findViewById(R.id.btnLogin)
         btnSignup = findViewById(R.id.btnSignup)
         tvTrialStatus = findViewById(R.id.tvTrialStatus)
         tvVersion = findViewById(R.id.tvVersion)
+        tvLogo = findViewById(R.id.tvLogo) // <-- Ye missing thi
 
         tvVersion.text = "Mama Bhutnika • v4.0"
         tvTrialStatus.text = "Sign in to check your subscription"
