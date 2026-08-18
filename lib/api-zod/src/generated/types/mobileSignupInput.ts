@@ -6,6 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface MobileSignupInput {
+  /** @minLength 2 */
+  name: string;
+  email: string;
+  /** @minLength 6 */
+  password: string;
+  referralCode: string;
 }

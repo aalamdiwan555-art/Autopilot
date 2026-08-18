@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand_mint">#36D39B</color>
+    <color name="brand_blue">#3FA9F5</color>
+    <color name="brand_amber">#F7B955</color>
+    <color name="ink_950">#07141D</color>
+    <color name="ink_900">#0C2029</color>
+    <color name="ink_800">#142A35</color>
+    <color name="ink_700">#275362</color>
+    <color name="text_primary">#F5FBF8</color>
+    <color name="text_secondary">#A9C0C5</color>
+    <color name="text_muted">#759097</color>
+    <color name="danger">#F47B7B</color>
+</resources>

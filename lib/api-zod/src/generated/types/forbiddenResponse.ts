@@ -5,7 +5,9 @@
  * Mobile subscription and referral API for Mama Bhutnika
  * OpenAPI spec version: 0.1.0
  */
+import type { ErrorResponse } from './errorResponse';
 
-export interface HealthStatus {
-  status: string;
-}
+/**
+ * Administrator access required
+ */
+export type ForbiddenResponse = ErrorResponse;

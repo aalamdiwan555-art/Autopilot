@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface GrantDaysInput {
+  /**
+     * @minimum 1
+     * @maximum 3650
+     */
+  days: number;
 }
