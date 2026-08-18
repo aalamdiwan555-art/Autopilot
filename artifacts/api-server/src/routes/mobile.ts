@@ -1,10 +1,4 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { desc, eq } from "drizzle-orm";
-import {
-  db,
-  usersTable,
-  type User,
-} from "@workspace/db";
 import {
   MobileAdminGrantDaysBody,
   MobileAdminGrantDaysParams,
@@ -20,18 +14,19 @@ import {
   MobileSignupResponse,
 } from "@workspace/api-zod";
 import {
-  createSessionToken,
-  getUserIdFromSessionToken,
-  hashPassword,
-  newReferralCode,
-  newUserId,
+  SupabaseRequestError,
+  getAppUserForAccessToken,
+  listAppUsers,
   normalizeEmail,
   publicUser,
-  verifyPassword,
+  signInWithSupabase,
+  signupWithSupabase,
+  updateAppUser,
+  validEmail,
+  type AppUser,
 } from "../lib/mobile-auth";
 
 const router: IRouter = Router();
-const ONE_HOUR_MS = 3_600_000;
 const ONE_DAY_MS = 86_400_000;
 const REWARD_THRESHOLD = 10;
 
@@ -39,31 +34,18 @@ function error(res: Response, status: number, message: string): void {
   res.status(status).json({ error: message });
 }
 
-async function userFromRequest(req: Request): Promise<User | null> {
+async function userFromRequest(req: Request): Promise<AppUser | null> {
   const header = req.get("authorization") ?? "";
   if (!header.toLowerCase().startsWith("bearer ")) return null;
-  const token = header.slice(7).trim();
-  const userId = getUserIdFromSessionToken(token);
-  if (!userId) return null;
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
-  return user ?? null;
+  return getAppUserForAccessToken(header.slice(7).trim());
 }
 
-async function uniqueReferralCode(): Promise<string> {
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    const code = newReferralCode();
-    const [existing] = await db
-      .select({ id: usersTable.id })
-      .from(usersTable)
-      .where(eq(usersTable.referralCode, code))
-      .limit(1);
-    if (!existing) return code;
-  }
-  throw new Error("Could not allocate a referral code.");
+function supabaseErrorStatus(errorValue: unknown, fallback = 500): number {
+  return errorValue instanceof SupabaseRequestError ? errorValue.status : fallback;
 }
 
-function validEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+function supabaseErrorMessage(errorValue: unknown, fallback: string): string {
+  return errorValue instanceof SupabaseRequestError ? errorValue.message : fallback;
 }
 
 router.post("/mobile/auth/signup", async (req, res): Promise<void> => {
@@ -81,57 +63,21 @@ router.post("/mobile/auth/signup", async (req, res): Promise<void> => {
     return;
   }
 
-  const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
-  if (existing) {
-    error(res, 409, "An account with this email already exists.");
-    return;
+  try {
+    const result = await signupWithSupabase(name, email, parsed.data.password, referralCode);
+    res.status(201).json(
+      MobileSignupResponse.parse({
+        token: result.token,
+        user: publicUser(result.user),
+      }),
+    );
+  } catch (errorValue) {
+    error(
+      res,
+      supabaseErrorStatus(errorValue),
+      supabaseErrorMessage(errorValue, "The account service is unavailable."),
+    );
   }
-
-  let referrer: User | undefined;
-  if (referralCode) {
-    [referrer] = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.referralCode, referralCode))
-      .limit(1);
-    if (!referrer) {
-      error(res, 400, "That referral code is not valid.");
-      return;
-    }
-  }
-
-  const now = new Date();
-  const userValues = {
-    id: newUserId(),
-    name,
-    email,
-    passwordHash: hashPassword(parsed.data.password),
-    referralCode: await uniqueReferralCode(),
-    referredById: referrer?.id ?? null,
-    subscriptionUntil: new Date(now.getTime() + ONE_HOUR_MS),
-    rewardProgress: 0,
-    totalAdsWatched: 0,
-    isAdmin:
-      email === normalizeEmail(process.env.ADMIN_EMAIL ?? "aalamdiwan555@gmail.com"),
-  };
-
-  const created = await db.transaction(async (tx) => {
-    const [user] = await tx.insert(usersTable).values(userValues).returning();
-    if (referrer) {
-      const currentUntil = Math.max(referrer.subscriptionUntil.getTime(), now.getTime());
-      await tx
-        .update(usersTable)
-        .set({ subscriptionUntil: new Date(currentUntil + 2 * ONE_DAY_MS) })
-        .where(eq(usersTable.id, referrer.id));
-    }
-    return user;
-  });
-
-  const response = MobileSignupResponse.parse({
-    token: createSessionToken(created.id),
-    user: publicUser(created),
-  });
-  res.status(201).json(response);
 });
 
 router.post("/mobile/auth/login", async (req, res): Promise<void> => {
@@ -141,27 +87,38 @@ router.post("/mobile/auth/login", async (req, res): Promise<void> => {
     return;
   }
 
-  const email = normalizeEmail(parsed.data.email);
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
-  if (!user || !verifyPassword(parsed.data.password, user.passwordHash)) {
-    error(res, 401, "Email or password is incorrect.");
-    return;
+  try {
+    const result = await signInWithSupabase(
+      normalizeEmail(parsed.data.email),
+      parsed.data.password,
+    );
+    res.json(
+      MobileLoginResponse.parse({
+        token: result.token,
+        user: publicUser(result.user),
+      }),
+    );
+  } catch (errorValue) {
+    const status = supabaseErrorStatus(errorValue, 401);
+    error(
+      res,
+      status === 500 ? 500 : status,
+      status === 500 ? "The account service is unavailable." : "Email or password is incorrect.",
+    );
   }
-
-  const response = MobileLoginResponse.parse({
-    token: createSessionToken(user.id),
-    user: publicUser(user),
-  });
-  res.json(response);
 });
 
 router.get("/mobile/me", async (req, res): Promise<void> => {
-  const user = await userFromRequest(req);
-  if (!user) {
+  try {
+    const user = await userFromRequest(req);
+    if (!user) {
+      error(res, 401, "Session expired.");
+      return;
+    }
+    res.json(MobileMeResponse.parse({ user: publicUser(user) }));
+  } catch {
     error(res, 401, "Session expired.");
-    return;
   }
-  res.json(MobileMeResponse.parse({ user: publicUser(user) }));
 });
 
 router.post("/mobile/referrals/redeem", async (req, res): Promise<void> => {
@@ -181,11 +138,11 @@ router.post("/mobile/referrals/redeem", async (req, res): Promise<void> => {
     return;
   }
 
-  const [referrer] = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.referralCode, parsed.data.referralCode.trim().toUpperCase()))
-    .limit(1);
+  const users = await listAppUsers();
+  const referrer = users.find(
+    (candidate) =>
+      candidate.referralCode === parsed.data.referralCode.trim().toUpperCase(),
+  );
   if (!referrer) {
     error(res, 400, "That referral code is not valid.");
     return;
@@ -196,16 +153,11 @@ router.post("/mobile/referrals/redeem", async (req, res): Promise<void> => {
   }
 
   const now = new Date();
-  await db.transaction(async (tx) => {
-    await tx
-      .update(usersTable)
-      .set({ referredById: referrer.id })
-      .where(eq(usersTable.id, user.id));
-    const currentUntil = Math.max(referrer.subscriptionUntil.getTime(), now.getTime());
-    await tx
-      .update(usersTable)
-      .set({ subscriptionUntil: new Date(currentUntil + 2 * ONE_DAY_MS) })
-      .where(eq(usersTable.id, referrer.id));
+  await updateAppUser(user, { referredById: referrer.id });
+  await updateAppUser(referrer, {
+    subscriptionUntil: new Date(
+      Math.max(referrer.subscriptionUntil.getTime(), now.getTime()) + 2 * ONE_DAY_MS,
+    ),
   });
 
   res.json(
@@ -225,7 +177,7 @@ router.post("/mobile/rewards/ad-completed", async (req, res): Promise<void> => {
   const nextProgress = user.rewardProgress + 1;
   const completedReward = nextProgress >= REWARD_THRESHOLD;
   const now = new Date();
-  const update = {
+  const updated = await updateAppUser(user, {
     rewardProgress: completedReward ? 0 : nextProgress,
     totalAdsWatched: user.totalAdsWatched + 1,
     ...(completedReward
@@ -235,12 +187,7 @@ router.post("/mobile/rewards/ad-completed", async (req, res): Promise<void> => {
           ),
         }
       : {}),
-  };
-  const [updated] = await db
-    .update(usersTable)
-    .set(update)
-    .where(eq(usersTable.id, user.id))
-    .returning();
+  });
 
   res.json(
     MobileRewardAdCompletedResponse.parse({
@@ -260,10 +207,12 @@ router.get("/mobile/admin/users", async (req, res): Promise<void> => {
     return;
   }
 
-  const users = await db.select().from(usersTable).orderBy(desc(usersTable.createdAt));
+  const users = await listAppUsers();
   res.json(
     MobileAdminUsersResponse.parse({
-      users: users.map(publicUser),
+      users: users
+        .sort((left, right) => right.id.localeCompare(left.id))
+        .map(publicUser),
     }),
   );
 });
@@ -286,27 +235,19 @@ router.post("/mobile/admin/users/:uid/grant", async (req, res): Promise<void> =>
     return;
   }
 
-  const [target] = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.id, params.data.uid))
-    .limit(1);
+  const target = (await listAppUsers()).find((candidate) => candidate.id === params.data.uid);
   if (!target) {
     error(res, 404, "User not found.");
     return;
   }
 
   const now = new Date();
-  const [updated] = await db
-    .update(usersTable)
-    .set({
-      subscriptionUntil: new Date(
-        Math.max(target.subscriptionUntil.getTime(), now.getTime()) +
-          parsed.data.days * ONE_DAY_MS,
-      ),
-    })
-    .where(eq(usersTable.id, target.id))
-    .returning();
+  const updated = await updateAppUser(target, {
+    subscriptionUntil: new Date(
+      Math.max(target.subscriptionUntil.getTime(), now.getTime()) +
+        parsed.data.days * ONE_DAY_MS,
+    ),
+  });
 
   res.json(
     MobileAdminGrantDaysResponse.parse({
