@@ -11,4 +11,8 @@
     <color name="text_secondary">#A9C0C5</color>
     <color name="text_muted">#759097</color>
     <color name="danger">#F47B7B</color>
+    
+    <!-- Ye 2 line add karo -->
+    <color name="black">#000</color>
+    <color name="white">#FFFFFF</color>
 </resources>
