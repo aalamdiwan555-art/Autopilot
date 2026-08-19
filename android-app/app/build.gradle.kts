@@ -22,8 +22,13 @@ android {
         providers.environmentVariable("STARTIO_APP_ID").orElse("207133232")
     ).get()
     val escapedStartIoAppId = startIoAppId.replace("\\", "\\\\").replace("\"", "\\\"")
+    val apiBaseUrl = providers.gradleProperty("API_BASE_URL").orElse(
+        providers.environmentVariable("API_BASE_URL").orElse("https://api.invalid/api")
+    ).get()
+    val escapedApiBaseUrl = apiBaseUrl.replace("\\", "\\\\").replace("\"", "\\\"")
     buildTypes.all {
         buildConfigField("String", "STARTIO_APP_ID", "\"$escapedStartIoAppId\"")
+        buildConfigField("String", "API_BASE_URL", "\"$escapedApiBaseUrl\"")
         buildConfigField(
             "Boolean",
             "STARTIO_TEST_MODE",
