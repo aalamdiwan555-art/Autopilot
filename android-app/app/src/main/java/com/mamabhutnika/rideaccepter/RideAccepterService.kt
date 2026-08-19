@@ -2,6 +2,9 @@ package com.mamabhutnika.rideaccepter
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.accessibilityservice.GestureDescription
+import android.graphics.Path
+import android.graphics.Rect
 import android.os.Handler
 import android.os.Looper
 import android.os.Build
@@ -75,7 +78,11 @@ class RideAccepterService : AccessibilityService() {
         serviceInfo = serviceInfo.apply {
             eventTypes = AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED or
                 AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
-                AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED
+                AccessibilityEvent.TYPE_WINDOWS_CHANGED or
+                AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED or
+                AccessibilityEvent.TYPE_VIEW_CLICKED or
+                AccessibilityEvent.TYPE_VIEW_FOCUSED or
+                AccessibilityEvent.TYPE_VIEW_SCROLLED
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
             notificationTimeout = 25
             flags = AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
@@ -122,7 +129,7 @@ class RideAccepterService : AccessibilityService() {
             for (candidate in nodes) {
                 try {
                     if (isSafeCandidate(candidate, label)) {
-                        scheduleClick(AccessibilityNodeInfo.obtain(candidate), label, packageName)
+                        scheduleClick(label, packageName)
                         return
                     }
                 } finally {
@@ -132,24 +139,32 @@ class RideAccepterService : AccessibilityService() {
         }
     }
 
-    private fun scheduleClick(node: AccessibilityNodeInfo, label: String, packageName: String) {
+    private fun scheduleClick(label: String, packageName: String) {
         clickScheduled = true
         handler.postDelayed({
             try {
-                val activePackage = rootInActiveWindow?.packageName?.toString()
+                val root = rootInActiveWindow
+                val activePackage = root?.packageName?.toString()
                 if (!isEnabled || isPaused || prefs?.canUseAutoClicker() != true ||
-                    activePackage != packageName ||
+                    root == null || activePackage != packageName ||
                     System.currentTimeMillis() - lastClickTime < CLICK_COOLDOWN
                 ) return@postDelayed
 
-                if (performClick(node)) {
+                // Re-query after the delay. Ride offer cards are frequently
+                // recreated by Compose/RecyclerView and the original node can
+                // become stale before the click is dispatched.
+                val freshNode = root.findAccessibilityNodeInfosByText(label)
+                    ?.firstOrNull { isSafeCandidate(it, label) }
+                if (freshNode != null && performClick(freshNode)) {
                     lastClickTime = System.currentTimeMillis()
                     Log.i(TAG, "Accepted guarded ride control '$label' in $packageName")
                     Toast.makeText(this, "Ride offer accepted", Toast.LENGTH_SHORT).show()
                 }
+                if (freshNode != null) {
+                    freshNode.recycle()
+                }
             } finally {
                 clickScheduled = false
-                node.recycle()
             }
         }, CLICK_DELAY)
     }
@@ -162,16 +177,21 @@ class RideAccepterService : AccessibilityService() {
         } else {
             ""
         }
-        val exactMatch = text.equals(label.trim(), ignoreCase = true) ||
-            description.equals(label.trim(), ignoreCase = true) ||
-            hint.equals(label.trim(), ignoreCase = true)
+        val wanted = normalize(label)
+        val exactMatch = listOf(text, description, hint)
+            .map(::normalize)
+            .any { value -> value == wanted || value.contains(wanted) }
         val blocked = listOf(text, description, hint).any { value ->
             BLOCKED_LABELS.any { blockedLabel ->
                 value.equals(blockedLabel, ignoreCase = true)
             }
         }
         return exactMatch && !blocked && node.isEnabled && node.isVisibleToUser &&
-            (node.isClickable || hasClickableParent(node))
+            (node.isClickable || hasClickableParent(node) || hasVisibleBounds(node))
+    }
+
+    private fun normalize(value: String): String {
+        return value.trim().replace(Regex("\\s+"), " ").lowercase()
     }
 
     private fun hasClickableParent(node: AccessibilityNodeInfo): Boolean {
@@ -191,7 +211,8 @@ class RideAccepterService : AccessibilityService() {
     }
 
     private fun performClick(node: AccessibilityNodeInfo): Boolean {
-        if (node.isClickable && node.performAction(AccessibilityNodeInfo.ACTION_CLICK)) return true
+        // Some apps expose ACTION_CLICK without setting isClickable.
+        if (node.performAction(AccessibilityNodeInfo.ACTION_CLICK)) return true
         var parent = node.parent
         while (parent != null) {
             if (parent.isClickable && parent.isEnabled &&
@@ -204,7 +225,32 @@ class RideAccepterService : AccessibilityService() {
             parent.recycle()
             parent = next
         }
-        return false
+        return dispatchTap(node)
+    }
+
+    private fun hasVisibleBounds(node: AccessibilityNodeInfo): Boolean {
+        val bounds = Rect()
+        node.getBoundsInScreen(bounds)
+        return node.isEnabled && node.isVisibleToUser && bounds.width() > 0 && bounds.height() > 0
+    }
+
+    private fun dispatchTap(node: AccessibilityNodeInfo): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N || !hasVisibleBounds(node)) return false
+        val bounds = Rect()
+        node.getBoundsInScreen(bounds)
+        val x = bounds.exactCenterX()
+        val y = bounds.exactCenterY()
+        val path = Path().apply {
+            moveTo(x, y)
+            lineTo(x + 1f, y + 1f)
+        }
+        return dispatchGesture(
+            GestureDescription.Builder()
+                .addStroke(GestureDescription.StrokeDescription(path, 0, 80))
+                .build(),
+            null,
+            null,
+        )
     }
 
     private fun loadSettings() {
