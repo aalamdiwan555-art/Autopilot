@@ -1,8 +1,8 @@
 <resources>
     <!-- Tumhare existing colors -->
-    <color name="autopilot_background">#0A0E1A</color>
-    <color name="autopilot_card">#121827</color>
-    <color name="autopilot_primary">#2D7DFF</color>
+    <color name="autopilot_background">#070B14</color>
+    <color name="autopilot_card">#101827</color>
+    <color name="autopilot_primary">#45D483</color>
     <color name="autopilot_text">#F4F7FF</color>
     <color name="autopilot_muted">#9AA7C0</color>
     <color name="autopilot_success">#45D483</color>

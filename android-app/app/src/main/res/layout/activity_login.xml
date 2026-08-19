@@ -14,16 +14,12 @@
         android:paddingEnd="24dp"
         android:paddingBottom="28dp">
 
-        <TextView
+        <ImageView
             android:id="@+id/tvLogo"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:background="@drawable/bg_logo_mark"
-            android:gravity="center"
-            android:text="AP"
-            android:textColor="@color/ink_950"
-            android:textSize="22sp"
-            android:textStyle="bold"
+            android:src="@drawable/ic_autopilot_mark"
+            android:contentDescription="Autopilot logo"
             android:layout_marginBottom="22dp" />
 
         <TextView
@@ -39,7 +35,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Stay ready for the next ride."
+            android:text="Your next ride,\nwithout the scramble."
             android:textColor="@color/text_primary"
             android:textSize="32sp"
             android:textStyle="bold"
@@ -49,7 +45,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="A focused assistant for Rapido, Ola, and Uber driver apps."
+            android:text="A calm, always-ready assistant for Rapido, Ola, and Uber drivers."
             android:textColor="@color/text_secondary"
             android:textSize="15sp"
             android:lineSpacingExtra="2dp"
@@ -65,7 +61,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Welcome back"
+                 android:text="Welcome back, driver"
                 android:textColor="@color/text_primary"
                 android:textSize="19sp"
                 android:textStyle="bold"
@@ -140,7 +136,7 @@
             android:id="@+id/tvTrialStatus"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Sign in to check your subscription"
+             android:text="Sign in to open your ride desk"
             android:textColor="@color/brand_amber"
             android:textSize="13sp"
             android:gravity="center"

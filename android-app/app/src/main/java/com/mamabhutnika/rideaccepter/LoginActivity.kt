@@ -24,7 +24,7 @@ open class LoginActivity : AppCompatActivity() {
     private lateinit var btnSignup: Button
     private lateinit var tvTrialStatus: TextView
     private lateinit var tvVersion: TextView
-    private lateinit var tvLogo: TextView
+    private lateinit var tvLogo: View
     private lateinit var tvForgotPassword: TextView
     private lateinit var prefs: UserPrefs
     private val api = ApiClient()

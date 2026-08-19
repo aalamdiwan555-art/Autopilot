@@ -14,22 +14,18 @@
         android:paddingEnd="24dp"
         android:paddingBottom="28dp">
 
-        <TextView
+        <ImageView
             android:id="@+id/tvLogo"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:background="@drawable/bg_logo_mark"
-            android:gravity="center"
-            android:text="MB"
-            android:textColor="@color/ink_950"
-            android:textSize="22sp"
-            android:textStyle="bold"
+            android:src="@drawable/ic_autopilot_mark"
+            android:contentDescription="Autopilot logo"
             android:layout_marginBottom="22dp" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Create your ride desk"
+             android:text="Build your ride desk"
             android:textColor="@color/text_primary"
             android:textSize="30sp"
             android:textStyle="bold"
@@ -38,7 +34,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Start with a one-hour subscription and keep your referral code handy."
+             android:text="Create one account for every shift, with rewards that keep you moving."
             android:textColor="@color/text_secondary"
             android:textSize="15sp"
             android:lineSpacingExtra="2dp"
@@ -55,7 +51,7 @@
                 android:id="@+id/etName"
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
-                android:hint="Full name"
+                 android:hint="Your name"
                 android:inputType="textPersonName"
                 android:singleLine="true"
                 android:textColor="@color/text_primary"
@@ -83,7 +79,7 @@
                 android:id="@+id/etPassword"
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
-                android:hint="Password (6+ characters)"
+                 android:hint="Create a password (6+ characters)"
                 android:inputType="textPassword"
                 android:singleLine="true"
                 android:textColor="@color/text_primary"
