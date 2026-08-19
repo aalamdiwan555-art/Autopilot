@@ -45,6 +45,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var subscriptionText: TextView
     private lateinit var rewardText: TextView
     private lateinit var serviceButton: Button
+    private lateinit var permissionsButton: Button
+    private lateinit var accessibilityButton: Button
+    private lateinit var overlayButton: Button
     private lateinit var referPage: LinearLayout
     private lateinit var homePage: LinearLayout
     private var accountRefreshing = false
@@ -58,6 +61,11 @@ class MainActivity : AppCompatActivity() {
         adManager.attachBanner(bannerBottom)
         refreshHome()
         requestFriendlyPermissions()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::permissionsButton.isInitialized) refreshPermissionState()
     }
 
     private fun buildScreen(): View {
@@ -112,13 +120,16 @@ class MainActivity : AppCompatActivity() {
         val setupCard = card()
         setupCard.addView(label("ONE-TIME SETUP", 11, "#36D39B"))
         setupCard.addView(label("Grant the permissions Autopilot needs to work reliably. We’ll explain each one before asking.", 14, "#A9C0C5"))
-        setupCard.addView(button("Review permissions", "#275362").apply { setOnClickListener { requestFriendlyPermissions(true) } })
-        setupCard.addView(button("Enable accessibility service", "#275362").apply {
+        permissionsButton = button("Review permissions", "#275362").apply { setOnClickListener { requestFriendlyPermissions(true) } }
+        setupCard.addView(permissionsButton)
+        accessibilityButton = button("Enable accessibility service", "#275362").apply {
             setOnClickListener { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
-        })
-        setupCard.addView(button("Enable floating control", "#275362").apply {
+        }
+        setupCard.addView(accessibilityButton)
+        overlayButton = button("Enable floating control", "#275362").apply {
             setOnClickListener { openOverlaySettings() }
-        })
+        }
+        setupCard.addView(overlayButton)
         layout.addView(setupCard)
 
         val modesCard = card()
@@ -244,10 +255,19 @@ class MainActivity : AppCompatActivity() {
         val permissions = buildList {
             add(Manifest.permission.CAMERA)
             add(Manifest.permission.RECORD_AUDIO)
-            if (Build.VERSION.SDK_INT >= 33) add(Manifest.permission.POST_NOTIFICATIONS)
-            else add(Manifest.permission.READ_EXTERNAL_STORAGE)
+            if (Build.VERSION.SDK_INT >= 33) {
+                add(Manifest.permission.POST_NOTIFICATIONS)
+                add(Manifest.permission.READ_MEDIA_IMAGES)
+            } else {
+                add(Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
         }.filter { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }
-        if (permissions.isEmpty() || !showDialog && prefs.isFirstRunComplete) return
+        if (permissions.isEmpty()) {
+            refreshPermissionState()
+            if (showDialog) Toast.makeText(this, "App permissions are already allowed.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (!showDialog && prefs.isFirstRunComplete) return
         AlertDialog.Builder(this)
             .setTitle("A few permissions, explained")
             .setMessage("Autopilot uses these only for the features you enable. You can deny any permission and continue, then change it later in Settings.")
@@ -256,6 +276,55 @@ class MainActivity : AppCompatActivity() {
                 ActivityCompat.requestPermissions(this, permissions.toTypedArray(), PERMISSION_REQUEST)
                 prefs.isFirstRunComplete = true
             }.show()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != PERMISSION_REQUEST) return
+        refreshPermissionState()
+        val denied = grantResults.count { it != PackageManager.PERMISSION_GRANTED }
+        if (denied > 0) {
+            Toast.makeText(
+                this,
+                "$denied permission(s) still need approval. You can change them anytime in Android Settings.",
+                Toast.LENGTH_LONG,
+            ).show()
+        }
+    }
+
+    private fun refreshPermissionState() {
+        if (!::permissionsButton.isInitialized) return
+        val missing = requestedPermissions().count {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+        permissionsButton.text = if (missing == 0) "Permissions ready" else "Review permissions · $missing remaining"
+        permissionsButton.setTextColor(if (missing == 0) Color.rgb(54, 211, 155) else Color.WHITE)
+        accessibilityButton.text = if (isAccessibilityEnabled()) "Accessibility service enabled" else "Enable accessibility service"
+        accessibilityButton.setTextColor(if (isAccessibilityEnabled()) Color.rgb(54, 211, 155) else Color.WHITE)
+        val overlayAllowed = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)
+        overlayButton.text = if (overlayAllowed) "Floating control enabled" else "Enable floating control"
+        overlayButton.setTextColor(if (overlayAllowed) Color.rgb(54, 211, 155) else Color.WHITE)
+    }
+
+    private fun requestedPermissions(): List<String> = buildList {
+        add(Manifest.permission.CAMERA)
+        add(Manifest.permission.RECORD_AUDIO)
+        if (Build.VERSION.SDK_INT >= 33) {
+            add(Manifest.permission.POST_NOTIFICATIONS)
+            add(Manifest.permission.READ_MEDIA_IMAGES)
+        } else {
+            add(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+    }
+
+    private fun isAccessibilityEnabled(): Boolean {
+        val enabled = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+            ?: return false
+        return enabled.split(':').any { it.equals("${packageName}/${RideAccepterService::class.java.name}", ignoreCase = true) }
     }
 
     private fun openOverlaySettings() {
