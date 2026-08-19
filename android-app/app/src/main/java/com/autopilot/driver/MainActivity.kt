@@ -21,7 +21,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var startButton: Button
     private lateinit var rewardButton: Button
     private lateinit var topAd: LinearLayout
+    private lateinit var statusAd: LinearLayout
+    private lateinit var setupAd: LinearLayout
+    private lateinit var rewardAd: LinearLayout
     private lateinit var bottomAd: LinearLayout
+    private lateinit var scroll: ScrollView
+    private lateinit var permissionsCard: LinearLayout
+    private lateinit var rewardsCard: LinearLayout
     private val permissionStatus = mutableMapOf<String, TextView>()
     private var rewardLoading = false
 
@@ -30,6 +36,9 @@ class MainActivity : AppCompatActivity() {
         prefs = AppPrefs(this)
         setContentView(buildScreen())
         AdManager.attachBanner(topAd)
+        AdManager.attachBanner(statusAd)
+        AdManager.attachBanner(setupAd)
+        AdManager.attachBanner(rewardAd)
         AdManager.attachBanner(bottomAd)
         animateEntrance()
     }
@@ -53,7 +62,7 @@ class MainActivity : AppCompatActivity() {
         topAd = LinearLayout(this).apply { gravity = Gravity.CENTER }
         root.addView(topAd, LinearLayout.LayoutParams(-1, dp(56)))
 
-        val scroll = ScrollView(this)
+        scroll = ScrollView(this)
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, dp(16), 0, dp(12))
@@ -78,35 +87,71 @@ class MainActivity : AppCompatActivity() {
             setMargins(0, dp(16), 0, 0)
         })
         content.addView(statusCard)
+        statusAd = adSlot()
+        content.addView(statusAd)
 
-        val permissions = card()
-        permissions.addView(label("SETUP", 11, R.color.autopilot_primary))
-        permissions.addView(label("Permissions are remembered. Tap a missing item only when Android asks you to review it.", 13, R.color.autopilot_muted))
-        permissionRow(permissions, "Accessibility", { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }) { RideAccessibilityService.isEnabled(this) }
-        permissionRow(permissions, "Floating control", {
+        permissionsCard = card()
+        permissionsCard.addView(label("SETUP", 11, R.color.autopilot_primary))
+        permissionsCard.addView(label("Permissions are remembered. Tap a missing item only when Android asks you to review it.", 13, R.color.autopilot_muted))
+        permissionRow(permissionsCard, "Accessibility", { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }) { RideAccessibilityService.isEnabled(this) }
+        permissionRow(permissionsCard, "Floating control", {
             if (Build.VERSION.SDK_INT >= 23) startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
         }) { overlayAllowed() }
-        permissionRow(permissions, "Screen capture", { requestScreenCapture() }) { prefs.captureGranted }
-        permissionRow(permissions, "Notifications", { requestNotifications() }) { notificationGranted() }
-        content.addView(permissions)
+        permissionRow(permissionsCard, "Screen capture", { requestScreenCapture() }) { prefs.captureGranted }
+        permissionRow(permissionsCard, "Notifications", { requestNotifications() }) { notificationGranted() }
+        content.addView(permissionsCard)
+        setupAd = adSlot()
+        content.addView(setupAd)
 
-        val rewards = card()
-        rewards.addView(label("OPTIONAL REWARDS", 11, R.color.autopilot_primary))
-        rewards.addView(label("Watch a real Start.io rewarded video to earn extra time.", 13, R.color.autopilot_muted))
+        rewardsCard = card()
+        rewardsCard.addView(label("OPTIONAL REWARDS", 11, R.color.autopilot_primary))
+        rewardsCard.addView(label("Watch a real Start.io rewarded video to earn extra time.", 13, R.color.autopilot_muted))
         rewardButton = Button(this).apply {
             text = "Watch a rewarded ad"
             isAllCaps = false
             setTextColor(Color.WHITE)
             setOnClickListener { watchRewardedAd() }
         }
-        rewards.addView(rewardButton, LinearLayout.LayoutParams(-1, dp(50)).apply { setMargins(0, dp(10), 0, 0) })
-        content.addView(rewards)
+        rewardsCard.addView(rewardButton, LinearLayout.LayoutParams(-1, dp(50)).apply { setMargins(0, dp(10), 0, 0) })
+        content.addView(rewardsCard)
+        rewardAd = adSlot()
+        content.addView(rewardAd)
 
         scroll.addView(content)
         root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
         bottomAd = LinearLayout(this).apply { gravity = Gravity.CENTER }
         root.addView(bottomAd, LinearLayout.LayoutParams(-1, dp(56)))
+        root.addView(buildNavigation(), LinearLayout.LayoutParams(-1, dp(64)))
         return root
+    }
+
+    private fun adSlot() = LinearLayout(this).apply {
+        gravity = Gravity.CENTER
+        contentDescription = "Advertisement"
+        layoutParams = LinearLayout.LayoutParams(-1, dp(56)).apply {
+            setMargins(0, dp(2), 0, dp(8))
+        }
+    }
+
+    private fun buildNavigation() = LinearLayout(this).apply {
+        gravity = Gravity.CENTER
+        setPadding(0, dp(2), 0, dp(8))
+        addView(navItem("Home") { scroll.fullScroll(View.FOCUS_UP) }, LinearLayout.LayoutParams(0, -1, 1f))
+        addView(navItem("Rewards") { scroll.smoothScrollTo(0, rewardsCard.top) }, LinearLayout.LayoutParams(0, -1, 1f))
+        addView(navItem("Settings") { scroll.smoothScrollTo(0, permissionsCard.top) }, LinearLayout.LayoutParams(0, -1, 1f))
+    }
+
+    private fun navItem(text: String, action: () -> Unit) = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        gravity = Gravity.CENTER
+        isClickable = true
+        setOnClickListener { action() }
+        addView(ImageView(this@MainActivity).apply {
+            setImageResource(R.drawable.ic_launcher_foreground)
+            setColorFilter(c(R.color.autopilot_primary))
+            contentDescription = "$text logo"
+        }, LinearLayout.LayoutParams(dp(24), dp(24)))
+        addView(label(text, 11, R.color.autopilot_muted))
     }
 
     private fun permissionRow(parent: LinearLayout, label: String, action: () -> Unit, check: () -> Boolean) {
