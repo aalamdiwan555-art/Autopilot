@@ -1,18 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="brand_mint">#36D39B</color>
-    <color name="brand_blue">#3FA9F5</color>
-    <color name="brand_amber">#F7B955</color>
-    <color name="ink_950">#07141D</color>
-    <color name="ink_900">#0C2029</color>
-    <color name="ink_800">#142A35</color>
-    <color name="ink_700">#275362</color>
-    <color name="text_primary">#F5FBF8</color>
-    <color name="text_secondary">#A9C0C5</color>
-    <color name="text_muted">#759097</color>
-    <color name="danger">#F47B7B</color>
-    
-    <!-- Ye 2 line add karo -->
-    <color name="black">#000</color>
-    <color name="white">#FFFFFF</color>
+    <color name="autopilot_background">#0A0E1A</color>
+    <color name="autopilot_card">#121827</color>
+    <color name="autopilot_primary">#2D7DFF</color>
+    <color name="autopilot_text">#F4F7FF</color>
+    <color name="autopilot_muted">#9AA7C0</color>
+    <color name="autopilot_success">#45D483</color>
 </resources>

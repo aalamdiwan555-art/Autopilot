@@ -1,16 +1,9 @@
 <resources>
-    <style name="Theme.MamaBhutnika" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/brand_mint</item>
-        <item name="colorPrimaryVariant">@color/brand_mint</item>
-        <item name="colorOnPrimary">@color/ink_950</item>
-        <item name="colorSecondary">@color/brand_blue</item>
-        <item name="colorSecondaryVariant">@color/brand_blue</item>
-        <item name="colorOnSecondary">@color/ink_950</item>
-        <item name="android:statusBarColor">@color/ink_950</item>
-        <item name="android:navigationBarColor">@color/ink_950</item>
-        <item name="android:windowBackground">@color/ink_950</item>
+    <style name="Theme.Autopilot" parent="Theme.Material3.Dark.NoActionBar">
         <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">@color/autopilot_primary</item>
+        <item name="android:navigationBarColor">@color/autopilot_background</item>
+        <item name="android:statusBarColor">@color/autopilot_background</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowActionModeOverlay">true</item>
     </style>
 </resources>

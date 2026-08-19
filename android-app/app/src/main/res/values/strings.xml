@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">Autopilot</string>
-    <string name="accessibility_service_description">Autopilot auto-detects and clicks Accept buttons in all Indian languages for Rapido, Ola, and Uber. Supports Hindi, Bengali, Telugu, Tamil, Marathi, Urdu, Gujarati, Kannada, Odia, Malayalam, Punjabi, Assamese, Maithili, Meitei, Bodo, Santali, Kashmiri, Nepali, Sindhi, English + 200+ keywords.</string>
+    <string name="accessibility_service_label">Autopilot ride automation</string>
+    <string name="accessibility_service_description">Reads ride offer controls in Rapido, Ola, and Uber to assist with accepting rides.</string>
+    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
+    <string name="admob_rewarded_id">ca-app-pub-3940256099942544/5224354917</string>
 </resources>

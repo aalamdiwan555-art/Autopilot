@@ -1,63 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.mamabhutnika.rideaccepter">
-
-    <!-- Start.io Required Permissions -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
 
     <application
-        android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:name=".MyApplication"
+        android:theme="@style/Theme.Autopilot"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.MamaBhutnika"
-        android:name=".MamaBhutnikaApp">
-
-        <!-- Start.io Application ID -->
+        android:allowBackup="false"
+        android:supportsRtl="true">
         <meta-data
-            android:name="com.startapp.sdk.APPLICATION_ID"
-            android:value="207133232" />
-
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="@string/admob_app_id" />
         <activity
-            android:name=".LoginActivity"
-            android:exported="true"
-            android:screenOrientation="portrait">
+            android:name=".OnboardingActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".SignupActivity"
-            android:exported="false"
-            android:screenOrientation="portrait" />
-
-        <activity
-            android:name=".MainActivity"
-            android:exported="false"
-            android:screenOrientation="portrait" />
-
-        <activity
-            android:name=".AdminActivity"
-            android:exported="false"
-            android:screenOrientation="portrait" />
-
+        <activity android:name=".MainActivity" android:exported="false" />
         <service
-            android:name=".RideAccepterService"
+            android:name=".RideAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="true"
-            android:label="Autopilot Service"
-            android:description="@string/accessibility_service_description">
+            android:label="@string/accessibility_service_label">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
@@ -65,11 +36,9 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
-
         <service
-            android:name=".FloatingWindowService"
-            android:enabled="true"
+            android:name=".ScreenReaderService"
+            android:foregroundServiceType="mediaProjection"
             android:exported="false" />
-
     </application>
 </manifest>
