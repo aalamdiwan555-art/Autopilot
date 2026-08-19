@@ -65,13 +65,13 @@ class AdminActivity : AppCompatActivity() {
 
         btnClearAll.setOnClickListener {
             prefs.clearSession()
-            startActivity(Intent(this, LoginActivity::class.java))
+            startActivity(Intent(this, com.autopilot.driver.LoginActivity::class.java))
             finish()
         }
 
         btnLogout.setOnClickListener {
             prefs.clearSession()
-            startActivity(Intent(this, LoginActivity::class.java))
+            startActivity(Intent(this, com.autopilot.driver.LoginActivity::class.java))
             finish()
         }
 
@@ -115,7 +115,7 @@ class AdminActivity : AppCompatActivity() {
                     error.message?.contains("session", ignoreCase = true) == true
                 ) {
                     prefs.clearSession()
-                    startActivity(Intent(this@AdminActivity, LoginActivity::class.java))
+                    startActivity(Intent(this@AdminActivity, com.autopilot.driver.LoginActivity::class.java))
                     finish()
                     return@launch
                 }

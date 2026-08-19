@@ -19,6 +19,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -37,6 +38,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private lateinit var prefs: UserPrefs
+    private lateinit var appPrefs: com.autopilot.driver.AppPrefs
     private lateinit var adManager: AdManager
     private lateinit var page: LinearLayout
     private lateinit var bannerTop: LinearLayout
@@ -52,10 +54,30 @@ class MainActivity : AppCompatActivity() {
     private lateinit var homePage: LinearLayout
     private val api = ApiClient()
     private var accountRefreshing = false
+    private val captureLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val data = result.data
+        if (result.resultCode != RESULT_OK || data == null) {
+            prefs.isEnabled = false
+            appPrefs.autopilotEnabled = false
+            Toast.makeText(this, "Screen capture permission is required to start Autopilot.", Toast.LENGTH_LONG).show()
+            refreshHome()
+            return@registerForActivityResult
+        }
+        prefs.isEnabled = true
+        appPrefs.captureGranted = true
+        appPrefs.autopilotEnabled = true
+        startScreenReader(result.resultCode, data)
+        refreshHome()
+        adManager.showInterstitial(this)
+        Toast.makeText(this, "Autopilot is ready and watching for rides.", Toast.LENGTH_SHORT).show()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         prefs = UserPrefs(this)
+        appPrefs = com.autopilot.driver.AppPrefs(this)
         adManager = AdManager.getInstance(this)
         setContentView(buildScreen())
         adManager.attachBanner(bannerTop)
@@ -146,6 +168,7 @@ class MainActivity : AppCompatActivity() {
             addView(label("ABOUT AUTOPILOT", 11, "#36D39B"))
             addView(label("A focused ride companion built for drivers who want fewer taps and more time on the road.", 14, "#A9C0C5"))
             addView(button("Open subscription & support", "#275362").apply { setOnClickListener { showAboutDialog() } })
+            addView(button("Log out", "#8D3E4A").apply { setOnClickListener { confirmLogout() } })
         })
         return layout
     }
@@ -205,9 +228,37 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun toggleAutomation() {
-        prefs.isEnabled = !prefs.isEnabled
-        refreshHome()
-        Toast.makeText(this, if (prefs.isEnabled) "Autopilot is ready." else "Autopilot paused.", Toast.LENGTH_SHORT).show()
+        if (prefs.isEnabled) {
+            prefs.isEnabled = false
+            appPrefs.autopilotEnabled = false
+            stopService(Intent(this, com.autopilot.driver.ScreenReaderService::class.java))
+            refreshHome()
+            adManager.showInterstitial(this)
+            Toast.makeText(this, "Autopilot paused.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (!prefs.hasActiveSubscription()) {
+            Toast.makeText(this, "Watch rewarded ads to unlock a day before starting.", Toast.LENGTH_LONG).show()
+            return
+        }
+        requestScreenCapture()
+    }
+
+    private fun requestScreenCapture() {
+        val manager = getSystemService(MEDIA_PROJECTION_SERVICE) as android.media.projection.MediaProjectionManager
+        captureLauncher.launch(manager.createScreenCaptureIntent())
+    }
+
+    private fun startScreenReader(resultCode: Int, data: Intent) {
+        val serviceIntent = Intent(this, com.autopilot.driver.ScreenReaderService::class.java).apply {
+            putExtra(com.autopilot.driver.ScreenReaderService.EXTRA_RESULT_CODE, resultCode)
+            putExtra(com.autopilot.driver.ScreenReaderService.EXTRA_RESULT_DATA, data)
+        }
+        if (Build.VERSION.SDK_INT >= 26) {
+            ContextCompat.startForegroundService(this, serviceIntent)
+        } else {
+            startService(serviceIntent)
+        }
     }
 
     private fun refreshHome() {
@@ -248,8 +299,28 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("About Autopilot")
             .setMessage("Your subscription keeps automation active. Rewarded videos can extend your access. Standard ads help keep the app available.\n\nTerms of Service · Privacy Policy · support@autopilot.app")
+            .setNegativeButton("Log out") { _, _ -> confirmLogout() }
             .setPositiveButton("Close", null)
             .show()
+    }
+
+    private fun confirmLogout() {
+        AlertDialog.Builder(this)
+            .setTitle("Log out of Autopilot?")
+            .setMessage("Your ride settings will stay on this device, but you’ll need to sign in again to use the dashboard.")
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Log out") { _, _ -> logout() }
+            .show()
+    }
+
+    private fun logout() {
+        prefs.clearSession()
+        appPrefs.autopilotEnabled = false
+        stopService(Intent(this, com.autopilot.driver.ScreenReaderService::class.java))
+        startActivity(Intent(this, com.autopilot.driver.LoginActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        })
+        finish()
     }
 
     private fun requestFriendlyPermissions(showDialog: Boolean = false) {

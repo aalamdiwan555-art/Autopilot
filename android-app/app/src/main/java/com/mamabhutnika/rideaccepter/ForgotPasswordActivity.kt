@@ -12,7 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import com.autopilot.driver.R
 import kotlinx.coroutines.launch
 
-class ForgotPasswordActivity : AppCompatActivity() {
+open class ForgotPasswordActivity : AppCompatActivity() {
     private lateinit var email: EditText
     private lateinit var reset: Button
     private lateinit var back: Button
@@ -58,7 +58,7 @@ class ForgotPasswordActivity : AppCompatActivity() {
             }
         }
         back.setOnClickListener {
-            startActivity(Intent(this, LoginActivity::class.java))
+            startActivity(Intent(this, com.autopilot.driver.LoginActivity::class.java))
             finish()
         }
     }

@@ -14,7 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
-class SignupActivity : AppCompatActivity() {
+open class SignupActivity : AppCompatActivity() {
 
     private lateinit var etName: EditText
     private lateinit var etEmail: EditText
@@ -79,7 +79,9 @@ class SignupActivity : AppCompatActivity() {
                     prefs.isLoggedIn = true
                     prefs.applyRemoteUser(result.user)
                     Toast.makeText(this@SignupActivity, "Account created!", Toast.LENGTH_SHORT).show()
-                     val destination = if (result.user.isAdmin) {
+                     val destination = if (!com.autopilot.driver.AppPrefs(this@SignupActivity).onboarded) {
+                         com.autopilot.driver.OnboardingActivity::class.java
+                     } else if (result.user.isAdmin) {
                          AdminActivity::class.java
                      } else {
                          MainActivity::class.java

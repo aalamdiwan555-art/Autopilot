@@ -16,7 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope // <-- IMPORTANT: yehi sahi import hai
 import kotlinx.coroutines.launch
 
-class LoginActivity : AppCompatActivity() {
+open class LoginActivity : AppCompatActivity() {
 
     private lateinit var etEmail: EditText
     private lateinit var etPassword: EditText
@@ -60,10 +60,10 @@ class LoginActivity : AppCompatActivity() {
         }
 
         btnSignup.setOnClickListener {
-            startActivity(Intent(this, SignupActivity::class.java))
+            startActivity(Intent(this, com.autopilot.driver.SignupActivity::class.java))
         }
         tvForgotPassword.setOnClickListener {
-            startActivity(Intent(this, ForgotPasswordActivity::class.java))
+            startActivity(Intent(this, com.autopilot.driver.ForgotPasswordActivity::class.java))
         }
 
         validateExistingSession()
@@ -107,7 +107,14 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun openHome(isAdmin: Boolean) {
-        startActivity(Intent(this, if (isAdmin) AdminActivity::class.java else MainActivity::class.java))
+        val destination = if (!com.autopilot.driver.AppPrefs(this).onboarded) {
+            com.autopilot.driver.OnboardingActivity::class.java
+        } else if (isAdmin) {
+            AdminActivity::class.java
+        } else {
+            MainActivity::class.java
+        }
+        startActivity(Intent(this, destination))
         finish()
     }
 

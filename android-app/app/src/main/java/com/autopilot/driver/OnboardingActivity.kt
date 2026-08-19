@@ -54,6 +54,11 @@ class OnboardingActivity : AppCompatActivity() {
             openMain()
             return
         }
+        if (!isLoggedIn()) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
         setContentView(buildScreen())
         refresh()
     }
@@ -197,16 +202,18 @@ class OnboardingActivity : AppCompatActivity() {
 
     private fun openMain() {
         val authPrefs = getSharedPreferences("mama_bhutnika_prefs", MODE_PRIVATE)
-        val destination = if (
-            authPrefs.getBoolean("is_logged_in", false) &&
-            !authPrefs.getString("api_token", "").isNullOrBlank()
-        ) {
+        val destination = if (isLoggedIn()) {
             MainActivity::class.java
         } else {
-            com.mamabhutnika.rideaccepter.LoginActivity::class.java
+            LoginActivity::class.java
         }
         startActivity(Intent(this, destination))
         finish()
+    }
+    private fun isLoggedIn(): Boolean {
+        val authPrefs = getSharedPreferences("mama_bhutnika_prefs", MODE_PRIVATE)
+        return authPrefs.getBoolean("is_logged_in", false) &&
+            !authPrefs.getString("api_token", "").isNullOrBlank()
     }
     private fun color(id: Int) = ContextCompat.getColor(this, id)
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()

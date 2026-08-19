@@ -22,9 +22,13 @@
             </intent-filter>
         </activity>
         <activity android:name=".MainActivity" android:exported="false" />
-        <activity android:name="com.mamabhutnika.rideaccepter.LoginActivity" android:exported="false" />
-        <activity android:name="com.mamabhutnika.rideaccepter.SignupActivity" android:exported="false" />
-        <activity android:name="com.mamabhutnika.rideaccepter.ForgotPasswordActivity" android:exported="false" />
+        <activity android:name=".LoginActivity" android:exported="false" />
+        <activity android:name=".SignupActivity" android:exported="false" />
+        <activity android:name=".ForgotPasswordActivity" android:exported="false" />
+        <!-- The authenticated dashboard and admin console still use the
+             shared API/session implementation in the legacy package. -->
+        <activity android:name="com.mamabhutnika.rideaccepter.MainActivity" android:exported="false" />
+        <activity android:name="com.mamabhutnika.rideaccepter.AdminActivity" android:exported="false" />
         <service
             android:name=".RideAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
