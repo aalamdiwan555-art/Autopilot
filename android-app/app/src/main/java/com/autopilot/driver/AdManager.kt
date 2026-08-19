@@ -37,12 +37,7 @@ object AdManager {
                     loading = false
                     Log.d(TAG, "Ad Loaded")
                 }
-                override fun onFailedToReceiveAd(ad: Ad) {
-                    loading = false
-                    rewardedAd = null
-                    Log.e(TAG, "Failed to load rewarded ad")
-                    handler.postDelayed({ loadRewardedAd(context.applicationContext) }, RETRY_MS)
-                }
+                override fun onAdFailedToLoad(adError: com.google.android.gms.ads.LoadAdError) { Log.e("AdManager", "Ad failed to load: ${adError.message}") }
             })
         } catch (error: Exception) {
             loading = false

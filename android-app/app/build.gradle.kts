@@ -49,4 +49,5 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     implementation("com.startapp:inapp-sdk:4.10.4")
     implementation("com.google.mlkit:text-recognition:16.0.0")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 }

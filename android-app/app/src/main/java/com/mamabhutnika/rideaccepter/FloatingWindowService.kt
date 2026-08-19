@@ -1,5 +1,8 @@
 package com.mamabhutnika.rideaccepter
 
+import com.autopilot.driver.R
+import com.autopilot.driver.BuildConfig
+
 import android.app.Service
 import android.content.Intent
 import android.graphics.PixelFormat

@@ -1,5 +1,8 @@
 package com.mamabhutnika.rideaccepter
 
+import com.autopilot.driver.R
+import com.autopilot.driver.BuildConfig
+
 import android.animation.ObjectAnimator
 import android.content.Intent
 import android.os.Bundle
