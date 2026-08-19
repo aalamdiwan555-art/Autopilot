@@ -1,462 +1,314 @@
 package com.mamabhutnika.rideaccepter
 
-import android.animation.ObjectAnimator
+import android.Manifest
 import android.content.Intent
-import android.content.ComponentName
+import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings.Secure
 import android.provider.Settings
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
-import android.view.Gravity
-import android.view.WindowManager
-import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.SwitchCompat
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import java.text.DateFormat
+import java.util.Date
 
 class MainActivity : AppCompatActivity() {
-
     companion object {
         const val RAPIDO_PACKAGE = "com.rapido.rider"
         const val OLA_PACKAGE = "com.olacabs.oladriver"
         const val UBER_PACKAGE = "com.ubercab.driver"
+        private const val PERMISSION_REQUEST = 40
     }
-
-    private lateinit var statusText: TextView
-    private lateinit var tvAdStatus: TextView
-    private lateinit var tvRewardProgress: TextView
-    private lateinit var toggleSwitch: SwitchCompat
-    private lateinit var rapidoModeSwitch: SwitchCompat
-    private lateinit var olaModeSwitch: SwitchCompat
-    private lateinit var uberModeSwitch: SwitchCompat
-    private lateinit var openSettingsBtn: Button
-    private lateinit var customTextInput: EditText
-    private lateinit var targetPackageInput: EditText
-    private lateinit var saveBtn: Button
-    private lateinit var floatingBtn: Button
-    private lateinit var overlayBtn: Button
-    private lateinit var btnWatchAd: Button
-    private lateinit var tvReferralCode: TextView
-    private lateinit var etReferralCode: EditText
-    private lateinit var btnRedeemReferral: Button
-    private lateinit var btnShareReferral: Button
-    private lateinit var btnLogout: Button
-    private lateinit var bannerContainer: LinearLayout
 
     private lateinit var prefs: UserPrefs
     private lateinit var adManager: AdManager
-    private val api = ApiClient()
-    private var isUpdatingAccount = false
+    private lateinit var page: LinearLayout
+    private lateinit var bannerTop: LinearLayout
+    private lateinit var bannerBottom: LinearLayout
+    private lateinit var statusTitle: TextView
+    private lateinit var subscriptionText: TextView
+    private lateinit var rewardText: TextView
+    private lateinit var serviceButton: Button
+    private lateinit var referPage: LinearLayout
+    private lateinit var homePage: LinearLayout
+    private var accountRefreshing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
         prefs = UserPrefs(this)
         adManager = AdManager.getInstance(this)
-
-        statusText = findViewById(R.id.statusText)
-        tvAdStatus = findViewById(R.id.tvAdStatus)
-        tvRewardProgress = findViewById(R.id.tvRewardProgress)
-        toggleSwitch = findViewById(R.id.toggleSwitch)
-        rapidoModeSwitch = findViewById(R.id.rapidoModeSwitch)
-        olaModeSwitch = findViewById(R.id.olaModeSwitch)
-        uberModeSwitch = findViewById(R.id.uberModeSwitch)
-        openSettingsBtn = findViewById(R.id.openSettingsBtn)
-        customTextInput = findViewById(R.id.customTextInput)
-        targetPackageInput = findViewById(R.id.targetPackageInput)
-        saveBtn = findViewById(R.id.saveBtn)
-        floatingBtn = findViewById(R.id.floatingBtn)
-        overlayBtn = findViewById(R.id.overlayBtn)
-        btnWatchAd = findViewById(R.id.btnWatchAd)
-        tvReferralCode = findViewById(R.id.tvReferralCode)
-        etReferralCode = findViewById(R.id.etReferralCode)
-        btnRedeemReferral = findViewById(R.id.btnRedeemReferral)
-        btnShareReferral = findViewById(R.id.btnShareReferral)
-        btnLogout = findViewById(R.id.btnLogout)
-        bannerContainer = findViewById(R.id.bannerContainer)
-        startStatusAnimation()
-
-        // --- Banner Ad (bottom of dashboard) ---
-        adManager.attachBanner(bannerContainer)
-
-        // --- Main toggle ---
-        toggleSwitch.setOnCheckedChangeListener { _, isChecked ->
-            if (isUpdatingAccount) return@setOnCheckedChangeListener
-            if (isChecked && !prefs.hasActiveSubscription()) {
-                isUpdatingAccount = true
-                toggleSwitch.isChecked = false
-                isUpdatingAccount = false
-                Toast.makeText(
-                    this,
-                    "Subscription expired. Watch ads to renew before enabling auto-click.",
-                    Toast.LENGTH_LONG,
-                ).show()
-                return@setOnCheckedChangeListener
-            }
-            prefs.isEnabled = isChecked
-            updateStatus()
-        }
-
-        // --- Mode switches (mutually exclusive) ---
-        rapidoModeSwitch.setOnCheckedChangeListener { _, isChecked ->
-            if (isUpdatingAccount) return@setOnCheckedChangeListener
-            if (isChecked) {
-                olaModeSwitch.isChecked = false
-                uberModeSwitch.isChecked = false
-            }
-            setTargetPackage(if (isChecked) RAPIDO_PACKAGE else "")
-        }
-
-        olaModeSwitch.setOnCheckedChangeListener { _, isChecked ->
-            if (isUpdatingAccount) return@setOnCheckedChangeListener
-            if (isChecked) {
-                rapidoModeSwitch.isChecked = false
-                uberModeSwitch.isChecked = false
-            }
-            setTargetPackage(if (isChecked) OLA_PACKAGE else "")
-        }
-
-        uberModeSwitch.setOnCheckedChangeListener { _, isChecked ->
-            if (isUpdatingAccount) return@setOnCheckedChangeListener
-            if (isChecked) {
-                rapidoModeSwitch.isChecked = false
-                olaModeSwitch.isChecked = false
-            }
-            setTargetPackage(if (isChecked) UBER_PACKAGE else "")
-        }
-
-        // --- Action buttons with interstitials ---
-        openSettingsBtn.setOnClickListener {
-            openAccessibilitySettings()
-        }
-
-        saveBtn.setOnClickListener {
-            prefs.customTexts = customTextInput.text.toString()
-            prefs.targetPackage = targetPackageInput.text.toString().trim()
-            Toast.makeText(this, "Settings Saved", Toast.LENGTH_SHORT).show()
-        }
-
-        floatingBtn.setOnClickListener {
-            if (!Settings.canDrawOverlays(this)) {
-                requestOverlayPermission()
-            } else {
-                startService(Intent(this, FloatingWindowService::class.java))
-                Toast.makeText(this, "Floating window started", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        overlayBtn.setOnClickListener {
-            requestOverlayPermission()
-        }
-
-        // --- Rewarded Video ---
-        btnWatchAd.setOnClickListener {
-            adManager.showRewardedVideo(this,
-                onRewarded = { updateRewardUI() },
-                onFailed = { updateRewardUI() }
-            )
-        }
-
-        btnRedeemReferral.setOnClickListener {
-            val code = etReferralCode.text.toString().trim()
-            if (code.isEmpty()) {
-                Toast.makeText(this, "Enter a referral code first.", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            redeemReferral(code)
-        }
-
-        btnShareReferral.setOnClickListener {
-            val code = prefs.referralCode
-            if (code.isBlank()) {
-                Toast.makeText(this, "Your referral code is still loading.", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            startActivity(
-                Intent.createChooser(
-                    Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(
-                            Intent.EXTRA_TEXT,
-                            "Download Autopilot and enter my referral code $code to give me 2 free subscription days.",
-                        )
-                    },
-                    "Share referral code",
-                ),
-            )
-        }
-
-        btnLogout.setOnClickListener {
-            RideAccepterService.isPaused = true
-            prefs.clearSession()
-            startActivity(Intent(this, LoginActivity::class.java))
-            finish()
-        }
-
-        loadSettings()
-        updateStatus()
-        updateRewardUI()
-        updateAdStatus()
-        updateReferralUI()
-
-        showFirstRunStart()
+        setContentView(buildScreen())
+        adManager.attachBanner(bannerTop)
+        adManager.attachBanner(bannerBottom)
+        refreshHome()
+        requestFriendlyPermissions()
     }
 
-    private fun setTargetPackage(pkg: String) {
-        targetPackageInput.setText(pkg)
-        prefs.targetPackage = pkg
-        prefs.isRapidoMode = rapidoModeSwitch.isChecked
-        prefs.isOlaMode = olaModeSwitch.isChecked
-        prefs.isUberMode = uberModeSwitch.isChecked
-    }
-
-    private fun requestOverlayPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:$packageName")))
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        refreshAccount()
-        updateStatus()
-        updateRewardUI()
-        updateAdStatus()
-        // Re-attach banner in case ad state changed
-        adManager.attachBanner(bannerContainer)
-        maybeRequestOverlayPermission()
-    }
-
-    private fun showFirstRunStart() {
-        if (prefs.isFirstRunComplete || isFinishing) return
-
-        val dialog = AlertDialog.Builder(this).create()
-        val content = LinearLayout(this).apply {
+    private fun buildScreen(): View {
+        val root = FrameLayout(this).apply { setBackgroundColor(Color.rgb(7, 20, 29)) }
+        val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setPadding(40, 48, 40, 48)
-            background = GradientDrawable(
-                GradientDrawable.Orientation.TL_BR,
-                intArrayOf(Color.rgb(7, 20, 29), Color.rgb(20, 42, 53)),
-            )
+            setPadding(dp(18), dp(18), dp(18), 0)
         }
-        val logo = TextView(this).apply {
-            text = "AP"
-            textSize = 28f
-            gravity = Gravity.CENTER
-            setTextColor(Color.rgb(7, 20, 29))
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor(Color.rgb(54, 211, 155))
-            }
-            layoutParams = LinearLayout.LayoutParams(84, 84).apply {
-                gravity = Gravity.CENTER_HORIZONTAL
-                bottomMargin = 28
-            }
-        }
-        val title = TextView(this).apply {
-            text = "Autopilot is ready"
-            textSize = 30f
-            setTextColor(Color.WHITE)
-            gravity = Gravity.CENTER
-            setTypeface(typeface, android.graphics.Typeface.BOLD)
-        }
-        val body = TextView(this).apply {
-            text = "Tap Start once. We’ll guide you through the Android permissions needed to find your target text and tap it quickly."
-            textSize = 16f
-            setTextColor(Color.rgb(169, 192, 197))
-            gravity = Gravity.CENTER
-            setPadding(0, 16, 0, 32)
-        }
-        val start = Button(this).apply {
-            text = "Start"
-            textSize = 16f
-            setAllCaps(false)
-            setTextColor(Color.rgb(7, 20, 29))
-            backgroundTintList = android.content.res.ColorStateList.valueOf(Color.rgb(54, 211, 155))
-            layoutParams = LinearLayout.LayoutParams(-1, 58)
-        }
-        start.setOnClickListener {
-            prefs.isFirstRunComplete = true
-            dialog.dismiss()
-            openAccessibilitySettings()
-        }
-        content.addView(logo)
-        content.addView(title)
-        content.addView(body)
-        content.addView(start)
-        dialog.setView(content)
-        dialog.setCancelable(false)
-        dialog.setOnShowListener {
-            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-            dialog.window?.setLayout(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.MATCH_PARENT,
-            )
-        }
-        dialog.show()
-        dialog.window?.setLayout(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT,
-        )
+        bannerTop = LinearLayout(this)
+        column.addView(bannerTop, LinearLayout.LayoutParams(-1, dp(52)))
+        val scroll = ScrollView(this).apply { isFillViewport = true }
+        page = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        homePage = buildHome()
+        referPage = buildRefer()
+        page.addView(homePage)
+        scroll.addView(page)
+        column.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        bannerBottom = LinearLayout(this)
+        column.addView(bannerBottom, LinearLayout.LayoutParams(-1, dp(52)))
+        column.addView(buildNavigation(), LinearLayout.LayoutParams(-1, dp(68)))
+        root.addView(column)
+        return root
     }
 
-    private fun openAccessibilitySettings() {
-        startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-        Toast.makeText(
-            this,
-            "Turn on Autopilot Service, then return here.",
-            Toast.LENGTH_LONG,
-        ).show()
+    private fun buildHome(): LinearLayout {
+        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        layout.addView(label("AUTOPILOT", 12, "#36D39B"))
+        layout.addView(title("Your ride desk", 28))
+        layout.addView(label("A quieter way to stay ready for every shift.", 14, "#A9C0C5"))
+        layout.addView(space(18))
+
+        val statusCard = card()
+        statusCard.addView(label("AUTOMATION STATUS", 11, "#36D39B"))
+        statusTitle = label("Checking your ride desk…", 16, "#F5FBF8")
+        statusCard.addView(statusTitle)
+        serviceButton = button("Start autopilot", "#36D39B")
+        serviceButton.setOnClickListener { toggleAutomation() }
+        statusCard.addView(serviceButton)
+        layout.addView(statusCard)
+
+        val subscriptionCard = card()
+        subscriptionCard.addView(label("SUBSCRIPTION & REWARDS", 11, "#F7B955"))
+        subscriptionText = label("", 14, "#F5FBF8")
+        rewardText = label("", 13, "#A9C0C5")
+        subscriptionCard.addView(subscriptionText)
+        subscriptionCard.addView(rewardText)
+        val rewardButton = button("Watch an ad · earn a day", "#3FA9F5")
+        rewardButton.setOnClickListener { watchRewardedAd() }
+        subscriptionCard.addView(rewardButton)
+        layout.addView(subscriptionCard)
+
+        val setupCard = card()
+        setupCard.addView(label("ONE-TIME SETUP", 11, "#36D39B"))
+        setupCard.addView(label("Grant the permissions Autopilot needs to work reliably. We’ll explain each one before asking.", 14, "#A9C0C5"))
+        setupCard.addView(button("Review permissions", "#275362").apply { setOnClickListener { requestFriendlyPermissions(true) } })
+        setupCard.addView(button("Enable accessibility service", "#275362").apply {
+            setOnClickListener { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+        })
+        setupCard.addView(button("Enable floating control", "#275362").apply {
+            setOnClickListener { openOverlaySettings() }
+        })
+        layout.addView(setupCard)
+
+        val modesCard = card()
+        modesCard.addView(label("SUPPORTED APPS", 11, "#36D39B"))
+        modesCard.addView(label("Choose where autopilot listens. Advanced matching is managed globally by admins and is intentionally not shown here.", 14, "#A9C0C5"))
+        val modes = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        modes.addView(modeButton("Rapido", UserPrefs.KEY_RAPIDO_MODE), LinearLayout.LayoutParams(0, dp(48), 1f))
+        modes.addView(modeButton("Ola", UserPrefs.KEY_OLA_MODE), LinearLayout.LayoutParams(0, dp(48), 1f))
+        modes.addView(modeButton("Uber", UserPrefs.KEY_UBER_MODE), LinearLayout.LayoutParams(0, dp(48), 1f))
+        modesCard.addView(modes)
+        layout.addView(modesCard)
+        layout.addView(card().apply {
+            addView(label("ABOUT AUTOPILOT", 11, "#36D39B"))
+            addView(label("A focused ride companion built for drivers who want fewer taps and more time on the road.", 14, "#A9C0C5"))
+            addView(button("Open subscription & support", "#275362").apply { setOnClickListener { showAboutDialog() } })
+        })
+        return layout
     }
 
-    private fun maybeRequestOverlayPermission() {
-        if (!prefs.isFirstRunComplete ||
-            prefs.hasPromptedForOverlay ||
-            !isAccessibilityServiceEnabled() ||
-            Settings.canDrawOverlays(this) ||
-            isFinishing
-        ) return
+    private fun buildRefer(): LinearLayout {
+        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        layout.addView(label("REFER & EARN", 12, "#36D39B"))
+        layout.addView(title("Bring your crew", 28))
+        layout.addView(label("Share Autopilot with another driver and earn rewards together.", 14, "#A9C0C5"))
+        layout.addView(space(18))
+        val card = card()
+        card.addView(label("YOUR REFERRAL CODE", 11, "#F7B955"))
+        val code = label(if (prefs.referralCode.isBlank()) "Loading…" else prefs.referralCode, 30, "#F5FBF8").apply {
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            setPadding(0, dp(12), 0, dp(12))
+        }
+        card.addView(code)
+        card.addView(button("Share referral link", "#36D39B").apply { setOnClickListener { shareReferral() } })
+        val analytics = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        analytics.addView(metric("0", "Invites"), LinearLayout.LayoutParams(0, dp(72), 1f))
+        analytics.addView(metric("${prefs.totalAdsWatched}", "Rewards"), LinearLayout.LayoutParams(0, dp(72), 1f))
+        card.addView(analytics)
+        layout.addView(card)
+        layout.addView(card().apply {
+            addView(label("HAVE A CODE?", 11, "#36D39B"))
+            val input = EditText(this@MainActivity).apply {
+                hint = "Enter a friend’s code"
+                setTextColor(Color.WHITE)
+                setHintTextColor(Color.rgb(117, 144, 151))
+                setSingleLine()
+            }
+            addView(input)
+            addView(button("Redeem code", "#3FA9F5").apply {
+                setOnClickListener { redeemReferral(input) }
+            })
+        })
+        return layout
+    }
 
-        prefs.hasPromptedForOverlay = true
+    private fun buildNavigation(): LinearLayout {
+        val nav = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(0, dp(6), 0, dp(10))
+        }
+        nav.addView(navButton("Home") { showPage(homePage) }, LinearLayout.LayoutParams(0, -1, 1f))
+        nav.addView(navButton("Refer & Earn") { showPage(referPage) }, LinearLayout.LayoutParams(0, -1, 1f))
+        nav.addView(navButton("Profile") { showAboutDialog() }, LinearLayout.LayoutParams(0, -1, 1f))
+        return nav
+    }
+
+    private fun showPage(view: View) {
+        page.removeAllViews()
+        page.addView(view)
+        adManager.showInterstitial(this)
+    }
+
+    private fun toggleAutomation() {
+        prefs.isEnabled = !prefs.isEnabled
+        refreshHome()
+        Toast.makeText(this, if (prefs.isEnabled) "Autopilot is ready." else "Autopilot paused.", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun refreshHome() {
+        if (!::statusTitle.isInitialized) return
+        val active = prefs.hasActiveSubscription()
+        statusTitle.text = if (prefs.isEnabled && active) "Running · ready to auto-accept" else if (!active) "Subscription needed to start autopilot" else "Paused · tap start when ready"
+        serviceButton.text = if (prefs.isEnabled) "Pause autopilot" else "Start autopilot"
+        subscriptionText.text = if (active) "Active until ${DateFormat.getDateInstance().format(Date(prefs.subscriptionUntilMs))}" else "Inactive · watch 10 ads to unlock one day"
+        rewardText.text = "Reward progress: ${prefs.rewardCounter}/${UserPrefs.REWARD_THRESHOLD} · ${prefs.totalAdsWatched} total ads watched"
+    }
+
+    private fun watchRewardedAd() {
+        adManager.showRewardedVideo(this, { refreshHome() }, { Toast.makeText(this, "The ad was not available. We’ll retry shortly.", Toast.LENGTH_LONG).show() })
+    }
+
+    private fun shareReferral() {
+        val code = prefs.referralCode.ifBlank { "AUTOPILOT" }
+        startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, "Join me on Autopilot. Use my referral code $code.")
+        }, "Share with a driver"))
+    }
+
+    private fun redeemReferral(input: EditText) {
+        val code = input.text.toString().trim()
+        if (code.isBlank() || prefs.apiToken.isBlank()) return
+        lifecycleScope.launch {
+            try {
+                Toast.makeText(this@MainActivity, api.redeemReferral(prefs.apiToken, code), Toast.LENGTH_LONG).show()
+                input.text.clear()
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivity, e.message ?: "Could not redeem code.", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun showAboutDialog() {
         AlertDialog.Builder(this)
-            .setTitle("One optional permission")
-            .setMessage("Overlay access is only needed for the movable floating Start/Pause controls. Target-text clicking works without it.")
-            .setPositiveButton("Grant overlay") { _, _ -> requestOverlayPermission() }
-            .setNegativeButton("Not now", null)
+            .setTitle("About Autopilot")
+            .setMessage("Your subscription keeps automation active. Rewarded videos can extend your access. Standard ads help keep the app available.\n\nTerms of Service · Privacy Policy · support@autopilot.app")
+            .setPositiveButton("Close", null)
             .show()
     }
 
-    private fun isAccessibilityServiceEnabled(): Boolean {
-        val enabled = Secure.getString(
-            contentResolver,
-            Secure.ENABLED_ACCESSIBILITY_SERVICES,
-        ) ?: return false
-        val expected = ComponentName(this, RideAccepterService::class.java).flattenToString()
-        return enabled.split(':').any { it.equals(expected, ignoreCase = true) }
+    private fun requestFriendlyPermissions(showDialog: Boolean = false) {
+        val permissions = buildList {
+            add(Manifest.permission.CAMERA)
+            add(Manifest.permission.RECORD_AUDIO)
+            if (Build.VERSION.SDK_INT >= 33) add(Manifest.permission.POST_NOTIFICATIONS)
+            else add(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }.filter { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }
+        if (permissions.isEmpty() || !showDialog && prefs.isFirstRunComplete) return
+        AlertDialog.Builder(this)
+            .setTitle("A few permissions, explained")
+            .setMessage("Autopilot uses these only for the features you enable. You can deny any permission and continue, then change it later in Settings.")
+            .setNegativeButton("Not now", null)
+            .setPositiveButton("Continue") { _, _ ->
+                ActivityCompat.requestPermissions(this, permissions.toTypedArray(), PERMISSION_REQUEST)
+                prefs.isFirstRunComplete = true
+            }.show()
     }
 
-    private fun loadSettings() {
-        isUpdatingAccount = true
-        toggleSwitch.isChecked = prefs.isEnabled && prefs.hasActiveSubscription()
-        // App selection is intentionally not part of the user flow. A blank
-        // filter lets the service inspect every foreground user app.
-        rapidoModeSwitch.isChecked = false
-        olaModeSwitch.isChecked = false
-        uberModeSwitch.isChecked = false
-        prefs.targetPackage = ""
-        customTextInput.setText(prefs.customTexts)
-        targetPackageInput.setText("")
-        isUpdatingAccount = false
+    private fun openOverlaySettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+        } else Toast.makeText(this, "Floating control is already allowed.", Toast.LENGTH_SHORT).show()
     }
 
-    private fun updateStatus() {
-        val enabled = RideAccepterService.isRunning
-        val overlay = Settings.canDrawOverlays(this)
-        val pkg = prefs.targetPackage
-        val mode = when {
-            pkg == RAPIDO_PACKAGE -> "RAPIDO"
-            pkg == OLA_PACKAGE -> "OLA"
-            pkg == UBER_PACKAGE -> "UBER"
-            else -> "ALL APPS"
-        }
-        statusText.text = buildString {
-            if (!prefs.hasActiveSubscription()) {
-                appendLine("Subscription: EXPIRED")
-                appendLine("Watch 10 ads to renew for 1 day")
+    private fun modeButton(text: String, key: String): Button = button(text, "#275362").apply {
+        setOnClickListener {
+            val value = when (key) {
+                UserPrefs.KEY_RAPIDO_MODE -> !prefs.isRapidoMode
+                UserPrefs.KEY_OLA_MODE -> !prefs.isOlaMode
+                else -> !prefs.isUberMode
             }
-            appendLine(if (enabled) "Service: RUNNING" else "Service: STOPPED")
-            appendLine("Mode: $mode")
-            appendLine(if (overlay) "Overlay: GRANTED" else "Overlay: DENIED")
-            append(if (prefs.hasActiveSubscription()) "Ready to Auto-Click" else "Auto-click is locked")
-        }
-        statusText.setTextColor(
-            if (enabled && overlay && prefs.hasActiveSubscription()) ContextCompat.getColor(this, android.R.color.holo_green_dark)
-            else ContextCompat.getColor(this, android.R.color.holo_orange_dark)
-        )
-    }
-
-    private fun startStatusAnimation() {
-        ObjectAnimator.ofFloat(statusText, "alpha", 0.82f, 1f, 0.82f).apply {
-            duration = 2600L
-            repeatCount = ObjectAnimator.INFINITE
-            interpolator = AccelerateDecelerateInterpolator()
-            start()
-        }
-    }
-
-    private fun updateRewardUI() {
-        tvRewardProgress.text = "Ads Watched: ${adManager.getRewardProgress()}"
-    }
-
-    private fun updateAdStatus() {
-        tvAdStatus.text = adManager.getRewardStatusText()
-    }
-
-    private fun updateReferralUI() {
-        tvReferralCode.text = if (prefs.referralCode.isBlank()) {
-            "Your referral code: loading..."
-        } else {
-            "Your referral code: ${prefs.referralCode}"
-        }
-    }
-
-    private fun refreshAccount() {
-        if (prefs.apiToken.isBlank()) return
-        lifecycleScope.launch {
-            try {
-                prefs.applyRemoteUser(api.me(prefs.apiToken))
-                updateReferralUI()
-                updateRewardUI()
-                updateAdStatus()
-                updateStatus()
-            } catch (error: Exception) {
-                if (error is ApiException && error.statusCode in listOf(401, 403)) {
-                    RideAccepterService.isPaused = true
-                    prefs.clearSession()
-                    startActivity(Intent(this@MainActivity, LoginActivity::class.java))
-                    finish()
-                }
+            when (key) {
+                UserPrefs.KEY_RAPIDO_MODE -> prefs.isRapidoMode = value
+                UserPrefs.KEY_OLA_MODE -> prefs.isOlaMode = value
+                else -> prefs.isUberMode = value
             }
+            setTextColor(if (value) Color.rgb(54, 211, 155) else Color.WHITE)
         }
     }
 
-    private fun redeemReferral(code: String) {
-        btnRedeemReferral.isEnabled = false
-        lifecycleScope.launch {
-            try {
-                val message = api.redeemReferral(prefs.apiToken, code)
-                Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
-                etReferralCode.text.clear()
-                refreshAccount()
-            } catch (error: Exception) {
-                Toast.makeText(
-                    this@MainActivity,
-                    error.message ?: "Could not redeem the referral code.",
-                    Toast.LENGTH_LONG,
-                ).show()
-            } finally {
-                btnRedeemReferral.isEnabled = true
-            }
-        }
+    private fun metric(value: String, caption: String) = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        gravity = Gravity.CENTER
+        addView(label(value, 20, "#F5FBF8"))
+        addView(label(caption, 12, "#A9C0C5"))
     }
 
-    // --- EXIT INTERSTITIAL ---
-    override fun onBackPressed() {
-        adManager.showExitInterstitial(this)
-        super.onBackPressed()
+    private fun navButton(text: String, onClick: () -> Unit) = button(text, "#142A35").apply { setOnClickListener { onClick() } }
+    private fun card() = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(dp(16), dp(16), dp(16), dp(16))
+        setBackgroundColor(Color.rgb(20, 42, 53))
+        layoutParams = LinearLayout.LayoutParams(-1, ViewGroup.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 0, dp(14)) }
     }
+    private fun button(text: String, color: String) = Button(this).apply {
+        this.text = text
+        textSize = 13f
+        isAllCaps = false
+        setTextColor(Color.WHITE)
+        setBackgroundColor(Color.parseColor(color))
+        layoutParams = LinearLayout.LayoutParams(-1, dp(46)).apply { setMargins(0, dp(10), 0, 0) }
+    }
+    private fun label(text: String, size: Int, color: String) = TextView(this).apply {
+        this.text = text
+        textSize = size.toFloat()
+        setTextColor(Color.parseColor(color))
+        setPadding(0, dp(3), 0, dp(3))
+    }
+    private fun title(text: String, size: Int) = label(text, size, "#F5FBF8").apply { typeface = Typeface.DEFAULT_BOLD }
+    private fun space(height: Int) = View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(height)) }
+    private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 }

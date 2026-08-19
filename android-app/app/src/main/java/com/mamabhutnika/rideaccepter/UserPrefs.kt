@@ -44,6 +44,7 @@ class UserPrefs(context: Context) {
         const val KEY_RAPIDO_MODE = "rapido_mode"
         const val KEY_OLA_MODE = "ola_mode"
         const val KEY_UBER_MODE = "uber_mode"
+        const val KEY_GLOBAL_ADVANCED_MATCHING = "global_advanced_matching"
 
         // Admin user list (stored as comma-separated "uid:email:adfree")
         const val KEY_ADMIN_USER_LIST = "admin_user_list"
@@ -284,6 +285,10 @@ class UserPrefs(context: Context) {
     var isUberMode: Boolean
         get() = prefs.getBoolean(KEY_UBER_MODE, false)
         set(value) = prefs.edit().putBoolean(KEY_UBER_MODE, value).apply()
+
+    var globalAdvancedMatching: Boolean
+        get() = prefs.getBoolean(KEY_GLOBAL_ADVANCED_MATCHING, false)
+        set(value) = prefs.edit().putBoolean(KEY_GLOBAL_ADVANCED_MATCHING, value).apply()
 
     fun clearAll() {
         prefs.edit().clear().apply()

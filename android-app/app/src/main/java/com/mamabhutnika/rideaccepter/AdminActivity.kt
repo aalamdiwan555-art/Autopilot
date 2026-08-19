@@ -9,6 +9,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
@@ -22,6 +23,7 @@ class AdminActivity : AppCompatActivity() {
     private lateinit var btnClearAll: Button
     private lateinit var btnLogout: Button
     private lateinit var usersContainer: LinearLayout
+    private lateinit var globalMatchingSwitch: SwitchCompat
     private lateinit var prefs: UserPrefs
     private lateinit var adManager: AdManager
     private val api = ApiClient()
@@ -40,6 +42,16 @@ class AdminActivity : AppCompatActivity() {
         btnClearAll = findViewById(R.id.btnClearAll)
         btnLogout = findViewById(R.id.btnLogout)
         usersContainer = findViewById(R.id.usersContainer)
+        globalMatchingSwitch = findViewById(R.id.globalMatchingSwitch)
+        globalMatchingSwitch.isChecked = prefs.globalAdvancedMatching
+        globalMatchingSwitch.setOnCheckedChangeListener { _, enabled ->
+            prefs.globalAdvancedMatching = enabled
+            Toast.makeText(
+                this,
+                if (enabled) "Advanced matching is enabled for active users." else "Advanced matching is disabled globally.",
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
 
         tvAdminTitle.text = "ADMIN PANEL"
         tvCurrentUser.text = "Your UID: ${prefs.uid}\nEmail: ${prefs.userEmail}"

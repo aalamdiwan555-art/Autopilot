@@ -36,6 +36,8 @@ class AdManager private constructor(private val context: Context) {
     private var isInterstitialReady = false
     private var isRewardedReady = false
     private var currentBanner: Banner? = null
+    private var interstitialRetry = 0
+    private var rewardedRetry = 0
 
     init {
         preloadInterstitial()
@@ -88,13 +90,24 @@ class AdManager private constructor(private val context: Context) {
         }, object : AdEventListener {
             override fun onReceiveAd(ad: Ad) {
                 isInterstitialReady = true
+                interstitialRetry = 0
                 Log.d(TAG, "Interstitial preloaded")
             }
             override fun onFailedToReceiveAd(ad: Ad?) {
                 isInterstitialReady = false
+                scheduleInterstitialRetry()
                 Log.w(TAG, "Interstitial preload failed")
             }
         })
+    }
+
+    private fun scheduleInterstitialRetry() {
+        val delay = (1_000L * (1 shl interstitialRetry.coerceAtMost(5))).coerceAtMost(30_000L)
+        interstitialRetry++
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
+            { if (!isInterstitialReady) preloadInterstitial() },
+            delay,
+        )
     }
 
     fun showInterstitial(activity: Activity) {
@@ -136,16 +149,27 @@ class AdManager private constructor(private val context: Context) {
             rewardedAd.loadAd(StartAppAd.AdMode.REWARDED_VIDEO, object : AdEventListener {
                 override fun onReceiveAd(ad: Ad) {
                     isRewardedReady = true
+                    rewardedRetry = 0
                     Log.d(TAG, "Rewarded video preloaded")
                 }
                 override fun onFailedToReceiveAd(ad: Ad?) {
                     isRewardedReady = false
+                    scheduleRewardedRetry()
                     Log.w(TAG, "Rewarded preload failed")
                 }
             })
         } catch (e: Exception) {
             Log.e(TAG, "Rewarded preload error", e)
         }
+    }
+
+    private fun scheduleRewardedRetry() {
+        val delay = (1_000L * (1 shl rewardedRetry.coerceAtMost(5))).coerceAtMost(30_000L)
+        rewardedRetry++
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
+            { if (!isRewardedReady) preloadRewarded() },
+            delay,
+        )
     }
 
     fun showRewardedVideo(activity: Activity, onRewarded: () -> Unit, onFailed: () -> Unit) {
