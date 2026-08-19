@@ -243,7 +243,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Choose a driver app"
+                 android:text="App filter (optional)"
+                 android:visibility="gone"
                 android:textColor="@color/brand_mint"
                 android:textSize="12sp"
                 android:textStyle="bold"
@@ -257,6 +258,7 @@
                 android:text="Rapido Captain"
                 android:textColor="@color/text_primary"
                 android:textSize="15sp"
+                 android:visibility="gone"
                 android:paddingTop="5dp"
                 android:paddingBottom="5dp" />
 
@@ -267,6 +269,7 @@
                 android:text="Ola Driver"
                 android:textColor="@color/text_primary"
                 android:textSize="15sp"
+                 android:visibility="gone"
                 android:paddingTop="5dp"
                 android:paddingBottom="5dp" />
 
@@ -277,6 +280,7 @@
                 android:text="Uber Driver"
                 android:textColor="@color/text_primary"
                 android:textSize="15sp"
+                 android:visibility="gone"
                 android:paddingTop="5dp"
                 android:paddingBottom="5dp" />
         </LinearLayout>
@@ -364,7 +368,8 @@
                 android:id="@+id/targetPackageInput"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:hint="Target package (optional)"
+                 android:hint="Leave blank to search every app"
+                 android:visibility="gone"
                 android:inputType="text"
                 android:singleLine="true"
                 android:textColor="@color/text_primary"
@@ -378,7 +383,7 @@
                 android:id="@+id/customTextInput"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:hint="Custom labels, separated by commas"
+                 android:hint="Target text, separated by commas"
                 android:inputType="textCapSentences"
                 android:singleLine="true"
                 android:textColor="@color/text_primary"

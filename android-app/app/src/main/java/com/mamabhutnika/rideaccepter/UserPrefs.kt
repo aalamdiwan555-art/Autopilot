@@ -25,6 +25,8 @@ class UserPrefs(context: Context) {
         // Ad-Free
         const val KEY_IS_AD_FREE = "is_ad_free"
         const val KEY_ADMIN_AD_FREE = "admin_ad_free_override"
+        const val KEY_FIRST_RUN_COMPLETE = "first_run_complete"
+        const val KEY_OVERLAY_PROMPTED = "overlay_prompted"
 
         // Trial
         const val KEY_TRIAL_START_MS = "trial_start_ms"
@@ -146,6 +148,18 @@ class UserPrefs(context: Context) {
         get() = prefs.getBoolean(KEY_ADMIN_AD_FREE, false)
         set(value) = prefs.edit().putBoolean(KEY_ADMIN_AD_FREE, value).apply()
 
+    /**
+     * The onboarding gate is intentionally separate from login state. A returning
+     * user should never be trapped in the first-run permission explanation again.
+     */
+    var isFirstRunComplete: Boolean
+        get() = prefs.getBoolean(KEY_FIRST_RUN_COMPLETE, false)
+        set(value) = prefs.edit().putBoolean(KEY_FIRST_RUN_COMPLETE, value).apply()
+
+    var hasPromptedForOverlay: Boolean
+        get() = prefs.getBoolean(KEY_OVERLAY_PROMPTED, false)
+        set(value) = prefs.edit().putBoolean(KEY_OVERLAY_PROMPTED, value).apply()
+
     // --- Trial ---
     var trialStartMs: Long
         get() = prefs.getLong(KEY_TRIAL_START_MS, 0L)
@@ -241,8 +255,9 @@ class UserPrefs(context: Context) {
     // --- Ad Show Gate ---
     fun shouldShowAds(): Boolean {
         if (adminAdFreeOverride) return false
-        if (isAdFree) return false
-        return !hasActiveSubscription()
+        // A subscription unlocks automation, but it does not silently remove ads.
+        // Only an explicit admin override (synced by an admin action) is ad-free.
+        return !isAdmin
     }
 
     // --- App Settings ---

@@ -218,7 +218,7 @@ class AdManager private constructor(private val context: Context) {
             prefs.adminAdFreeOverride -> "Ad-Free: ADMIN OVERRIDE"
             prefs.hasActiveSubscription() -> {
                 val remaining = (prefs.subscriptionUntilMs - System.currentTimeMillis()).coerceAtLeast(0L)
-                "Subscription active: ${remaining / UserPrefs.ONE_DAY_MS}d ${(remaining % UserPrefs.ONE_DAY_MS) / 3_600_000L}h remaining"
+                "Subscription active • ads support the free plan: ${remaining / UserPrefs.ONE_DAY_MS}d ${(remaining % UserPrefs.ONE_DAY_MS) / 3_600_000L}h remaining"
             }
             else -> "Subscription expired - watch 10 videos for 1 free day"
         }

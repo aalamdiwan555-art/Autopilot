@@ -13,8 +13,8 @@ import android.widget.Toast
 /**
  * A deliberately guarded accessibility helper.
  *
- * It only considers exact positive ride-offer labels inside an explicitly selected
- * supported driver app. It must never be used as a general-purpose clicker.
+ * It only considers exact positive labels in visible, enabled controls. A blank
+ * package filter means every user app; the optional filter can narrow matching.
  */
 class RideAccepterService : AccessibilityService() {
 
@@ -23,13 +23,18 @@ class RideAccepterService : AccessibilityService() {
         var isRunning = false
         var isPaused = false
         var lastClickTime = 0L
-        private const val CLICK_COOLDOWN = 750L
-        private const val CLICK_DELAY = 35L
+        private const val CLICK_COOLDOWN = 120L
+        private const val CLICK_DELAY = 25L
 
         const val RAPIDO_PACKAGE = "com.rapido.rider"
         const val OLA_PACKAGE = "com.olacabs.oladriver"
         const val UBER_PACKAGE = "com.ubercab.driver"
-        private val ALLOWED_PACKAGES = setOf(RAPIDO_PACKAGE, OLA_PACKAGE, UBER_PACKAGE)
+        private val BLOCKED_PACKAGES = setOf(
+            "android",
+            "com.android.systemui",
+            "com.android.settings",
+            "com.mamabhutnika.rideaccepter",
+        )
 
         private val ACCEPT_TEXTS = setOf(
             "Accept", "Accept Ride", "Accept Trip", "Accept Request", "Accept Order",
@@ -87,10 +92,10 @@ class RideAccepterService : AccessibilityService() {
         }
 
         val packageName = event.packageName?.toString() ?: ""
-        if (packageName !in ALLOWED_PACKAGES ||
+        if (packageName in BLOCKED_PACKAGES ||
             (targetPackage.isNotBlank() && packageName != targetPackage)
         ) {
-            isRunning = false
+            isRunning = isEnabled && prefs?.canUseAutoClicker() == true
             return
         }
 

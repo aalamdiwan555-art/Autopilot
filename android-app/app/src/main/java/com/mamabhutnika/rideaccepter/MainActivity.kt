@@ -2,15 +2,21 @@ package com.mamabhutnika.rideaccepter
 
 import android.animation.ObjectAnimator
 import android.content.Intent
+import android.content.ComponentName
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings.Secure
 import android.provider.Settings
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.view.Gravity
+import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -133,7 +139,7 @@ class MainActivity : AppCompatActivity() {
 
         // --- Action buttons with interstitials ---
         openSettingsBtn.setOnClickListener {
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            openAccessibilitySettings()
         }
 
         saveBtn.setOnClickListener {
@@ -205,15 +211,7 @@ class MainActivity : AppCompatActivity() {
         updateAdStatus()
         updateReferralUI()
 
-        // Overlay permission prompt
-        if (!Settings.canDrawOverlays(this)) {
-            AlertDialog.Builder(this)
-                .setTitle("Permission Required")
-                .setMessage("Autopilot needs Display over other apps permission for floating controls.")
-                .setPositiveButton("Grant") { _, _ -> requestOverlayPermission() }
-                .setNegativeButton("Later", null)
-                .show()
-        }
+        showFirstRunStart()
     }
 
     private fun setTargetPackage(pkg: String) {
@@ -239,16 +237,129 @@ class MainActivity : AppCompatActivity() {
         updateAdStatus()
         // Re-attach banner in case ad state changed
         adManager.attachBanner(bannerContainer)
+        maybeRequestOverlayPermission()
+    }
+
+    private fun showFirstRunStart() {
+        if (prefs.isFirstRunComplete || isFinishing) return
+
+        val dialog = AlertDialog.Builder(this).create()
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(40, 48, 40, 48)
+            background = GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                intArrayOf(Color.rgb(7, 20, 29), Color.rgb(20, 42, 53)),
+            )
+        }
+        val logo = TextView(this).apply {
+            text = "AP"
+            textSize = 28f
+            gravity = Gravity.CENTER
+            setTextColor(Color.rgb(7, 20, 29))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.rgb(54, 211, 155))
+            }
+            layoutParams = LinearLayout.LayoutParams(84, 84).apply {
+                gravity = Gravity.CENTER_HORIZONTAL
+                bottomMargin = 28
+            }
+        }
+        val title = TextView(this).apply {
+            text = "Autopilot is ready"
+            textSize = 30f
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+        }
+        val body = TextView(this).apply {
+            text = "Tap Start once. We’ll guide you through the Android permissions needed to find your target text and tap it quickly."
+            textSize = 16f
+            setTextColor(Color.rgb(169, 192, 197))
+            gravity = Gravity.CENTER
+            setPadding(0, 16, 0, 32)
+        }
+        val start = Button(this).apply {
+            text = "Start"
+            textSize = 16f
+            setAllCaps(false)
+            setTextColor(Color.rgb(7, 20, 29))
+            backgroundTintList = android.content.res.ColorStateList.valueOf(Color.rgb(54, 211, 155))
+            layoutParams = LinearLayout.LayoutParams(-1, 58)
+        }
+        start.setOnClickListener {
+            prefs.isFirstRunComplete = true
+            dialog.dismiss()
+            openAccessibilitySettings()
+        }
+        content.addView(logo)
+        content.addView(title)
+        content.addView(body)
+        content.addView(start)
+        dialog.setView(content)
+        dialog.setCancelable(false)
+        dialog.setOnShowListener {
+            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+            dialog.window?.setLayout(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+            )
+        }
+        dialog.show()
+        dialog.window?.setLayout(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
+        )
+    }
+
+    private fun openAccessibilitySettings() {
+        startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        Toast.makeText(
+            this,
+            "Turn on Autopilot Service, then return here.",
+            Toast.LENGTH_LONG,
+        ).show()
+    }
+
+    private fun maybeRequestOverlayPermission() {
+        if (!prefs.isFirstRunComplete ||
+            prefs.hasPromptedForOverlay ||
+            !isAccessibilityServiceEnabled() ||
+            Settings.canDrawOverlays(this) ||
+            isFinishing
+        ) return
+
+        prefs.hasPromptedForOverlay = true
+        AlertDialog.Builder(this)
+            .setTitle("One optional permission")
+            .setMessage("Overlay access is only needed for the movable floating Start/Pause controls. Target-text clicking works without it.")
+            .setPositiveButton("Grant overlay") { _, _ -> requestOverlayPermission() }
+            .setNegativeButton("Not now", null)
+            .show()
+    }
+
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        val enabled = Secure.getString(
+            contentResolver,
+            Secure.ENABLED_ACCESSIBILITY_SERVICES,
+        ) ?: return false
+        val expected = ComponentName(this, RideAccepterService::class.java).flattenToString()
+        return enabled.split(':').any { it.equals(expected, ignoreCase = true) }
     }
 
     private fun loadSettings() {
         isUpdatingAccount = true
         toggleSwitch.isChecked = prefs.isEnabled && prefs.hasActiveSubscription()
-        rapidoModeSwitch.isChecked = prefs.isRapidoMode
-        olaModeSwitch.isChecked = prefs.isOlaMode
-        uberModeSwitch.isChecked = prefs.isUberMode
+        // App selection is intentionally not part of the user flow. A blank
+        // filter lets the service inspect every foreground user app.
+        rapidoModeSwitch.isChecked = false
+        olaModeSwitch.isChecked = false
+        uberModeSwitch.isChecked = false
+        prefs.targetPackage = ""
         customTextInput.setText(prefs.customTexts)
-        targetPackageInput.setText(prefs.targetPackage)
+        targetPackageInput.setText("")
         isUpdatingAccount = false
     }
 
