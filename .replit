@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-modules = ["nodejs-24", "java-graalvm22.3", "postgresql-16"]
-=======
-modules = ["nodejs-24", "java-graalvm22.3"]
->>>>>>> 3209c95 (Rebuild Autopilot native Android app)
+modules = ["nodejs-24"]
 
 [deployment]
 router = "application"
@@ -22,11 +18,3 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
-
-[nix]
-channel = "stable-25_05"
-
-[userenv]
-
-[userenv.shared]
-STARTIO_APP_ID = "207133232"
