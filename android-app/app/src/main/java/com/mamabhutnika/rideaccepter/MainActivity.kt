@@ -50,6 +50,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var overlayButton: Button
     private lateinit var referPage: LinearLayout
     private lateinit var homePage: LinearLayout
+    private val api = ApiClient()
     private var accountRefreshing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
