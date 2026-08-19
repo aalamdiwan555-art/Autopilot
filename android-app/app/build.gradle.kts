@@ -15,8 +15,11 @@ android {
         versionName = "1.0"
     }
 
+    // This is a public Start.io application identifier, not a secret.
+    // The property/env override keeps staging builds flexible while ensuring
+    // a normal build is never silently shipped without an ads configuration.
     val startIoAppId = providers.gradleProperty("STARTIO_APP_ID").orElse(
-        providers.environmentVariable("STARTIO_APP_ID").orElse("")
+        providers.environmentVariable("STARTIO_APP_ID").orElse("207133232")
     ).get()
     val escapedStartIoAppId = startIoAppId.replace("\\", "\\\\").replace("\"", "\\\"")
     buildTypes.all {
