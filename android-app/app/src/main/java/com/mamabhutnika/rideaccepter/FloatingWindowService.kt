@@ -70,9 +70,9 @@ class FloatingWindowService : Service() {
 
         fun updateStatus() {
             statusText.text = when {
-                !prefs.isEnabled -> "Mama Bhutnika: OFF"
-                RideAccepterService.isPaused -> "Mama Bhutnika: PAUSED"
-                else -> "Mama Bhutnika: RUNNING"
+                !prefs.isEnabled -> "Autopilot: OFF"
+                RideAccepterService.isPaused -> "Autopilot: PAUSED"
+                else -> "Autopilot: RUNNING"
             }
         }
 

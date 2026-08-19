@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "mama-bhutnika"
+rootProject.name = "autopilot"
 include(":app")

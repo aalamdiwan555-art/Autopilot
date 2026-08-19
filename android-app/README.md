@@ -1,4 +1,4 @@
-# Mama Bhutnika
+# Autopilot
 
 An Android Accessibility Service app that auto-detects "Accept" buttons across all major Indian languages and auto-clicks them.
 

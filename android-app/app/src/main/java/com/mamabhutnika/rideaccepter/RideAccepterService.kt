@@ -76,7 +76,7 @@ class RideAccepterService : AccessibilityService() {
             flags = AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
                 AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
         }
-        Toast.makeText(this, "Mama Bhutnika is ready", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Autopilot is ready", Toast.LENGTH_SHORT).show()
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {

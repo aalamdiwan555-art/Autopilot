@@ -40,7 +40,7 @@ class LoginActivity : AppCompatActivity() {
         tvVersion = findViewById(R.id.tvVersion)
         tvLogo = findViewById(R.id.tvLogo)
 
-        tvVersion.text = "Mama Bhutnika • v4.0"
+        tvVersion.text = "Autopilot • v4.0"
         tvTrialStatus.text = "Sign in to check your subscription"
         startBreathingAnimation(tvLogo)
 

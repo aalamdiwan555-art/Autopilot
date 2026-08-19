@@ -184,7 +184,7 @@ class MainActivity : AppCompatActivity() {
                         type = "text/plain"
                         putExtra(
                             Intent.EXTRA_TEXT,
-                            "Download Mama Bhutnika and enter my referral code $code to give me 2 free subscription days.",
+                            "Download Autopilot and enter my referral code $code to give me 2 free subscription days.",
                         )
                     },
                     "Share referral code",
@@ -209,7 +209,7 @@ class MainActivity : AppCompatActivity() {
         if (!Settings.canDrawOverlays(this)) {
             AlertDialog.Builder(this)
                 .setTitle("Permission Required")
-                .setMessage("Mama Bhutnika needs Display over other apps permission for floating controls.")
+                .setMessage("Autopilot needs Display over other apps permission for floating controls.")
                 .setPositiveButton("Grant") { _, _ -> requestOverlayPermission() }
                 .setNegativeButton("Later", null)
                 .show()

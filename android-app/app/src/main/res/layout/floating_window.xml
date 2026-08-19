@@ -12,7 +12,7 @@
         android:id="@+id/floatingStatus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Mama Bhutnika: OFF"
+        android:text="Autopilot: OFF"
         android:textColor="@color/brand_mint"
         android:textSize="12sp"
         android:textStyle="bold"

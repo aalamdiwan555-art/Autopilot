@@ -26,7 +26,7 @@
                 android:layout_height="48dp"
                 android:background="@drawable/bg_logo_mark"
                 android:gravity="center"
-                android:text="MB"
+                android:text="AP"
                 android:textColor="@color/ink_950"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -41,7 +41,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="MAMA BHUTNIKA"
+                    android:text="AUTOPILOT"
                     android:textColor="@color/brand_mint"
                     android:textSize="12sp"
                     android:textStyle="bold"

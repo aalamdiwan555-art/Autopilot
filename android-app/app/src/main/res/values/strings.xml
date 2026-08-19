@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">Mama Bhutnika</string>
-    <string name="accessibility_service_description">Mama Bhutnika auto-detects and clicks Accept buttons in all Indian languages for Rapido, Ola, and Uber. Supports Hindi, Bengali, Telugu, Tamil, Marathi, Urdu, Gujarati, Kannada, Odia, Malayalam, Punjabi, Assamese, Maithili, Meitei, Bodo, Santali, Kashmiri, Nepali, Sindhi, English + 200+ keywords.</string>
+    <string name="app_name">Autopilot</string>
+    <string name="accessibility_service_description">Autopilot auto-detects and clicks Accept buttons in all Indian languages for Rapido, Ola, and Uber. Supports Hindi, Bengali, Telugu, Tamil, Marathi, Urdu, Gujarati, Kannada, Odia, Malayalam, Punjabi, Assamese, Maithili, Meitei, Bodo, Santali, Kashmiri, Nepali, Sindhi, English + 200+ keywords.</string>
 </resources>

@@ -1,5 +1,5 @@
 ================================================================================
-                    MAMA BHUTNIKA - PROJECT DOCUMENTATION (A-Z)
+                    AUTOPILOT - PROJECT DOCUMENTATION (A-Z)
 ================================================================================
 Last Updated: 2026-08-17
 Version: 4.0
@@ -8,7 +8,7 @@ Total Changes Made: 20
 ================================================================================
 A. PROJECT OVERVIEW
 ================================================================================
-Name:        Mama Bhutnika
+Name:        Autopilot
 Type:        Android Accessibility Auto-Clicker App with Ad Monetization
 Purpose:     Auto-detects and clicks "Accept" buttons across all Indian
              languages in ride-hailing apps (Rapido, Ola, Uber)
