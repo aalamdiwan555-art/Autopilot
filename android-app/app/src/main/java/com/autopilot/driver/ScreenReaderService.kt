@@ -24,6 +24,7 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import java.nio.ByteBuffer
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 class ScreenReaderService : Service() {
     companion object {
@@ -31,17 +32,22 @@ class ScreenReaderService : Service() {
         const val EXTRA_RESULT_DATA = "result_data"
         private const val CHANNEL = "autopilot_running"
         private const val INTERVAL_MS = 1500L
+        @Volatile var isRunning = false
     }
 
     private val handler = Handler(Looper.getMainLooper())
     private val worker = Executors.newSingleThreadExecutor()
+    private val ocrInFlight = AtomicBoolean(false)
     private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    private lateinit var prefs: AppPrefs
     private var projection: MediaProjection? = null
     private var display: VirtualDisplay? = null
     private var reader: ImageReader? = null
 
     override fun onCreate() {
         super.onCreate()
+        prefs = AppPrefs(this)
+        isRunning = true
         createChannel()
         val notification = NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(android.R.drawable.ic_menu_view)
@@ -80,7 +86,8 @@ class ScreenReaderService : Service() {
 
     private val captureLoop = object : Runnable {
         override fun run() {
-            if (RideAccessibilityService.foregroundPackage in setOf("com.rapido.rider", "com.olacabs.oladriver", "com.ubercab.driver", "com.ubercab")) {
+            if (prefs.autopilotEnabled &&
+                RideAccessibilityService.foregroundPackage in setOf("com.rapido.rider", "com.olacabs.oladriver", "com.ubercab.driver", "com.ubercab")) {
                 processLatestFrame()
             }
             handler.postDelayed(this, INTERVAL_MS)
@@ -88,20 +95,30 @@ class ScreenReaderService : Service() {
     }
 
     private fun processLatestFrame() {
-        val image = reader?.acquireLatestImage() ?: return
+        if (!ocrInFlight.compareAndSet(false, true)) return
+        val image = reader?.acquireLatestImage()
+        if (image == null) {
+            ocrInFlight.set(false)
+            return
+        }
         try {
             val bitmap = imageToBitmap(image)
+            image.close()
             worker.execute {
                 recognizer.process(InputImage.fromBitmap(bitmap, 0))
                     .addOnSuccessListener { result ->
-                        if (OcrKeywords.containsAccept(result.text)) {
+                        if (prefs.autopilotEnabled && OcrKeywords.containsAccept(result.text)) {
                             RideAccessibilityService.requestAcceptClick()
                         }
                     }
-                    .addOnCompleteListener { bitmap.recycle() }
+                    .addOnCompleteListener {
+                        bitmap.recycle()
+                        ocrInFlight.set(false)
+                    }
             }
         } catch (_: Exception) {
             image.close()
+            ocrInFlight.set(false)
         }
     }
 
@@ -123,6 +140,8 @@ class ScreenReaderService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
+        isRunning = false
+        ocrInFlight.set(false)
         display?.release()
         reader?.close()
         projection?.stop()

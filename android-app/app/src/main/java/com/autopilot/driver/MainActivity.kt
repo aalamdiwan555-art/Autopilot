@@ -5,24 +5,25 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
 import android.view.Gravity
+import android.view.View
+import android.view.animation.Animation
+import android.view.animation.LinearInterpolator
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
     private lateinit var prefs: AppPrefs
-    private lateinit var overlayStatus: TextView
-    private lateinit var rewardedButton: Button
-    private lateinit var rewardProgress: TextView
+    private lateinit var statusTitle: TextView
+    private lateinit var statusCopy: TextView
+    private lateinit var startButton: Button
+    private lateinit var rewardButton: Button
     private lateinit var topAd: LinearLayout
     private lateinit var bottomAd: LinearLayout
-    private var rewardLoading = false
-    private val mainHandler = Handler(Looper.getMainLooper())
     private val permissionStatus = mutableMapOf<String, TextView>()
+    private var rewardLoading = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,154 +31,219 @@ class MainActivity : AppCompatActivity() {
         setContentView(buildScreen())
         AdManager.attachBanner(topAd)
         AdManager.attachBanner(bottomAd)
+        animateEntrance()
     }
 
     override fun onResume() {
         super.onResume()
-        if (::overlayStatus.isInitialized) refreshPermissions()
+        if (::startButton.isInitialized) refreshState()
     }
 
     override fun onDestroy() {
-        mainHandler.removeCallbacksAndMessages(null)
+        startButton.clearAnimation()
         super.onDestroy()
     }
 
-    private fun buildScreen(): LinearLayout {
+    private fun buildScreen(): View {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(c(R.color.autopilot_background))
-            setPadding(dp(18), dp(16), dp(18), 0)
+            setPadding(dp(18), dp(14), dp(18), 0)
         }
         topAd = LinearLayout(this).apply { gravity = Gravity.CENTER }
         root.addView(topAd, LinearLayout.LayoutParams(-1, dp(56)))
+
         val scroll = ScrollView(this)
-        val content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        rewardedButton = Button(this).apply {
-            text = "Watch an ad — earn a day"
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, dp(16), 0, dp(12))
+        }
+        content.addView(label("AUTOPILOT", 12, R.color.autopilot_primary))
+        content.addView(title("Your ride desk", 32))
+        content.addView(label("One tap to start. Autopilot stays quiet until you turn it on.", 15, R.color.autopilot_muted))
+
+        val statusCard = card()
+        statusTitle = title("Ready when you are", 22)
+        statusCopy = label("", 14, R.color.autopilot_muted)
+        statusCard.addView(statusTitle)
+        statusCard.addView(statusCopy)
+        startButton = Button(this).apply {
+            text = "START AUTOPILOT"
+            isAllCaps = false
+            textSize = 16f
+            setTextColor(Color.WHITE)
+            setOnClickListener { toggleAutopilot() }
+        }
+        statusCard.addView(startButton, LinearLayout.LayoutParams(-1, dp(58)).apply {
+            setMargins(0, dp(16), 0, 0)
+        })
+        content.addView(statusCard)
+
+        val permissions = card()
+        permissions.addView(label("SETUP", 11, R.color.autopilot_primary))
+        permissions.addView(label("Permissions are remembered. Tap a missing item only when Android asks you to review it.", 13, R.color.autopilot_muted))
+        permissionRow(permissions, "Accessibility", { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }) { RideAccessibilityService.isEnabled(this) }
+        permissionRow(permissions, "Floating control", {
+            if (Build.VERSION.SDK_INT >= 23) startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+        }) { overlayAllowed() }
+        permissionRow(permissions, "Screen capture", { requestScreenCapture() }) { prefs.captureGranted }
+        permissionRow(permissions, "Notifications", { requestNotifications() }) { notificationGranted() }
+        content.addView(permissions)
+
+        val rewards = card()
+        rewards.addView(label("OPTIONAL REWARDS", 11, R.color.autopilot_primary))
+        rewards.addView(label("Watch a real Start.io rewarded video to earn extra time.", 13, R.color.autopilot_muted))
+        rewardButton = Button(this).apply {
+            text = "Watch a rewarded ad"
             isAllCaps = false
             setTextColor(Color.WHITE)
             setOnClickListener { watchRewardedAd() }
         }
-        content.addView(rewardedButton, LinearLayout.LayoutParams(-1, dp(52)).apply { setMargins(0, dp(10), 0, dp(16)) })
+        rewards.addView(rewardButton, LinearLayout.LayoutParams(-1, dp(50)).apply { setMargins(0, dp(10), 0, 0) })
+        content.addView(rewards)
 
-        val subscription = card("SUBSCRIPTION")
-        subscription.addView(text("Active until ${prefs.lastSubscription}", 17, R.color.autopilot_text))
-        rewardProgress = text("", 13, R.color.autopilot_muted)
-        subscription.addView(rewardProgress)
-        val progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply { progress = prefs.rewardCount * 10; max = 100 }
-        subscription.addView(progress, LinearLayout.LayoutParams(-1, dp(8)).apply { setMargins(0, dp(10), 0, dp(4)) })
-        content.addView(subscription)
-
-        val setup = card("ONE-TIME SETUP")
-        overlayStatus = text("", 14, R.color.autopilot_text)
-        setup.addView(setupRow("Accessibility", RideAccessibilityService.isEnabled(this)) {
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-        })
-        setup.addView(setupRow("Floating control", overlayAllowed()) {
-            if (Build.VERSION.SDK_INT >= 23) {
-                startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
-            }
-        })
-        setup.addView(setupRow("Screen capture", prefs.captureGranted))
-        setup.addView(setupRow("Notification", Build.VERSION.SDK_INT < 33 || checkSelfPermission("android.permission.POST_NOTIFICATIONS") == 0))
-        setup.addView(setupRow("Internet", true))
-        content.addView(setup)
-
-        val supported = card("SUPPORTED APPS")
-        supported.addView(text("Advanced matching is managed globally by admins.", 13, R.color.autopilot_muted))
-        listOf("Rapido" to "rapido", "Ola" to "ola", "Uber" to "uber").forEach { (label, key) ->
-            val row = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-            row.addView(text(label, 15, R.color.autopilot_text), LinearLayout.LayoutParams(0, dp(48), 1f))
-            val toggle = Switch(this).apply {
-                isChecked = prefs.appEnabled(key)
-                setOnCheckedChangeListener { _, checked -> prefs.setAppEnabled(key, checked) }
-            }
-            row.addView(toggle)
-            supported.addView(row)
-        }
-        content.addView(supported)
         scroll.addView(content)
         root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
         bottomAd = LinearLayout(this).apply { gravity = Gravity.CENTER }
         root.addView(bottomAd, LinearLayout.LayoutParams(-1, dp(56)))
-        val nav = LinearLayout(this).apply {
-            gravity = Gravity.CENTER
-            setPadding(0, dp(6), 0, dp(10))
-        }
-        listOf("Home", "Refer & Earn", "Profile").forEach { label ->
-            nav.addView(Button(this).apply {
-                text = label
-                isAllCaps = false
-                setTextColor(Color.WHITE)
-                setOnClickListener { AdManager.showInterstitial(this@MainActivity) }
-            }, LinearLayout.LayoutParams(0, dp(52), 1f))
-        }
-        root.addView(nav)
-        refreshPermissions()
         return root
     }
 
-    private fun setupRow(label: String, granted: Boolean, settingsAction: (() -> Unit)? = null): LinearLayout =
-        LinearLayout(this).apply {
+    private fun permissionRow(parent: LinearLayout, label: String, action: () -> Unit, check: () -> Boolean) {
+        val row = LinearLayout(this).apply {
             gravity = Gravity.CENTER_VERTICAL
-            addView(text(label, 14, R.color.autopilot_text), LinearLayout.LayoutParams(0, dp(44), 1f))
-            val status = text(if (granted) "✓" else "Grant", 14, if (granted) R.color.autopilot_success else R.color.autopilot_primary)
-            if (settingsAction != null) status.setOnClickListener { settingsAction() }
-            permissionStatus[label] = status
-            addView(status)
+            setPadding(0, dp(5), 0, dp(5))
         }
+        row.addView(label(label, 14, R.color.autopilot_text), LinearLayout.LayoutParams(0, dp(42), 1f))
+        val status = label(if (check()) "✓" else "Review", 13, if (check()) R.color.autopilot_success else R.color.autopilot_primary)
+        status.setOnClickListener { if (!check()) action() }
+        permissionStatus[label] = status
+        row.addView(status)
+        parent.addView(row)
+    }
 
-    private fun refreshPermissions() {
-        val overlay = overlayAllowed()
-        if (::overlayStatus.isInitialized) overlayStatus.text = if (overlay) "Floating control enabled ✓" else "Floating control needs access"
-        if (::overlayStatus.isInitialized) overlayStatus.setTextColor(c(if (overlay) R.color.autopilot_success else R.color.autopilot_muted))
-        val states = mapOf(
-            "Accessibility" to RideAccessibilityService.isEnabled(this),
-            "Floating control" to overlay,
-            "Screen capture" to prefs.captureGranted,
-            "Notification" to (Build.VERSION.SDK_INT < 33 || checkSelfPermission("android.permission.POST_NOTIFICATIONS") == 0),
-            "Internet" to true,
-        )
-        states.forEach { (label, granted) ->
-            permissionStatus[label]?.apply {
-                text = if (granted) "✓" else "Grant"
-                setTextColor(c(if (granted) R.color.autopilot_success else R.color.autopilot_primary))
-            }
+    private fun refreshState() {
+        val accessibility = RideAccessibilityService.isEnabled(this)
+        val capture = prefs.captureGranted
+        val ready = accessibility && capture && overlayAllowed()
+        val running = prefs.autopilotEnabled && ScreenReaderService.isRunning
+        statusTitle.text = if (running) "Autopilot is running" else "Ready when you are"
+        statusCopy.text = when {
+            running -> "Watching for visible ride offers. You stay in control."
+            !ready -> "Complete the highlighted setup items before starting."
+            else -> "Your permissions are ready. Start when you are ready to drive."
         }
-        if (::rewardProgress.isInitialized) rewardProgress.text = "Reward ${prefs.rewardCount}/10"
+        startButton.text = if (running) "PAUSE AUTOPILOT" else "START AUTOPILOT"
+        startButton.setBackgroundColor(c(if (running) R.color.autopilot_muted else R.color.autopilot_primary))
+        updatePermission("Accessibility", accessibility)
+        updatePermission("Floating control", overlayAllowed())
+        updatePermission("Screen capture", capture)
+        updatePermission("Notifications", notificationGranted())
+        if (running) startPulse() else startButton.clearAnimation()
+    }
+
+    private fun toggleAutopilot() {
+        if (prefs.autopilotEnabled && ScreenReaderService.isRunning) {
+            prefs.autopilotEnabled = false
+            stopService(Intent(this, ScreenReaderService::class.java))
+            refreshState()
+            Toast.makeText(this, "Autopilot paused.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (!RideAccessibilityService.isEnabled(this) || !overlayAllowed() || !prefs.captureGranted) {
+            Toast.makeText(this, "Review the highlighted setup items first.", Toast.LENGTH_LONG).show()
+            return
+        }
+        prefs.autopilotEnabled = true
+        if (!ScreenReaderService.isRunning) requestScreenCapture()
+        refreshState()
+    }
+
+    private fun requestScreenCapture() {
+        val manager = getSystemService(MEDIA_PROJECTION_SERVICE) as android.media.projection.MediaProjectionManager
+        startActivityForResult(manager.createScreenCaptureIntent(), CAPTURE_REQUEST)
+    }
+
+    @Deprecated("Android activity result API retained for API 24 compatibility")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != CAPTURE_REQUEST || resultCode != RESULT_OK || data == null) {
+            prefs.autopilotEnabled = false
+            refreshState()
+            return
+        }
+        prefs.captureGranted = true
+        val intent = Intent(this, ScreenReaderService::class.java).apply {
+            putExtra(ScreenReaderService.EXTRA_RESULT_CODE, resultCode)
+            putExtra(ScreenReaderService.EXTRA_RESULT_DATA, data)
+        }
+        ContextCompat.startForegroundService(this, intent)
+        refreshState()
     }
 
     private fun watchRewardedAd() {
         if (rewardLoading) return
         rewardLoading = true
-        rewardedButton.isEnabled = false
-        rewardedButton.text = "Loading reward…"
+        rewardButton.isEnabled = false
+        rewardButton.text = "Loading real ad…"
         AdManager.showRewardedAd(this, {
             prefs.rewardDays += 1
-            prefs.rewardCount = (prefs.rewardCount + 1) % 10
             rewardLoading = false
-            rewardedButton.isEnabled = true
-            rewardedButton.text = "Watch an ad — earn a day"
-            refreshPermissions()
+            rewardButton.isEnabled = true
+            rewardButton.text = "Watch a rewarded ad"
             Toast.makeText(this, "Reward added for one day.", Toast.LENGTH_SHORT).show()
         }, {
             rewardLoading = false
-            rewardedButton.isEnabled = true
-            rewardedButton.text = "Watch an ad — earn a day"
+            rewardButton.isEnabled = true
+            rewardButton.text = "Watch a rewarded ad"
         })
     }
 
+    private fun requestNotifications() {
+        if (Build.VERSION.SDK_INT >= 33) requestPermissions(arrayOf("android.permission.POST_NOTIFICATIONS"), 11)
+    }
+
+    private fun notificationGranted() =
+        Build.VERSION.SDK_INT < 33 || checkSelfPermission("android.permission.POST_NOTIFICATIONS") == 0
+
+    private fun updatePermission(name: String, granted: Boolean) {
+        permissionStatus[name]?.apply {
+            text = if (granted) "✓" else "Review"
+            setTextColor(c(if (granted) R.color.autopilot_success else R.color.autopilot_primary))
+        }
+    }
+
+    private fun animateEntrance() {
+        window.decorView.alpha = 0f
+        window.decorView.animate().alpha(1f).setDuration(450L).start()
+    }
+
+    private fun startPulse() {
+        if (startButton.animation != null) return
+        startButton.animate().scaleX(1.03f).scaleY(1.03f).setDuration(700L)
+            .withEndAction {
+                startButton.animate().scaleX(1f).scaleY(1f).setDuration(700L)
+                    .withEndAction { if (prefs.autopilotEnabled) startPulse() }.start()
+            }.start()
+    }
+
     private fun overlayAllowed() = Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(this)
-    private fun card(title: String) = LinearLayout(this).apply {
+    private fun card() = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(16), dp(14), dp(16), dp(12))
         setBackgroundColor(c(R.color.autopilot_card))
-        addView(text(title, 11, R.color.autopilot_primary))
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, dp(14)) }
     }
-    private fun text(value: String, size: Int, color: Int) = TextView(this).apply {
+    private fun label(value: String, size: Int, color: Int) = TextView(this).apply {
         text = value; textSize = size.toFloat(); setTextColor(c(color)); setPadding(0, dp(4), 0, dp(4))
     }
+    private fun title(value: String, size: Int) = label(value, size, R.color.autopilot_text).apply {
+        typeface = android.graphics.Typeface.DEFAULT_BOLD
+    }
     private fun c(id: Int) = ContextCompat.getColor(this, id)
-    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
+    private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
+
+    companion object {
+        private const val CAPTURE_REQUEST = 701
+    }
 }

@@ -5,12 +5,15 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.graphics.Path
 import android.graphics.Rect
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 
 class RideAccessibilityService : AccessibilityService() {
     companion object {
         private var instance: RideAccessibilityService? = null
+        private const val CLICK_COOLDOWN_MS = 900L
         @Volatile var foregroundPackage: String = ""
         private val ridePackages = setOf(
             "com.rapido.rider", "com.olacabs.oladriver", "com.ubercab.driver",
@@ -20,8 +23,11 @@ class RideAccessibilityService : AccessibilityService() {
             (context.getSystemService(ACCESSIBILITY_SERVICE) as? android.view.accessibility.AccessibilityManager)
                 ?.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
                 ?.any { it.resolveInfo.serviceInfo.packageName == context.packageName } == true
-        fun requestAcceptClick() { instance?.clickAccept() }
+        fun requestAcceptClick() { instance?.requestClick() }
     }
+
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var lastClickAt = 0L
 
     override fun onServiceConnected() {
         instance = this
@@ -37,15 +43,20 @@ class RideAccessibilityService : AccessibilityService() {
         foregroundPackage = event?.packageName?.toString().orEmpty()
     }
 
+    private fun requestClick() {
+        if (!AppPrefs(this).autopilotEnabled) return
+        mainHandler.post { clickAccept() }
+    }
+
     private fun clickAccept() {
+        if (System.currentTimeMillis() - lastClickAt < CLICK_COOLDOWN_MS) return
         if (foregroundPackage !in ridePackages) return
         val root = rootInActiveWindow ?: return
         val candidate = findCandidate(root)
         if (candidate != null) {
-            performClick(candidate)
+            if (performClick(candidate)) lastClickAt = System.currentTimeMillis()
             candidate.recycle()
         }
-        root.recycle()
     }
 
     private fun findCandidate(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
@@ -89,6 +100,7 @@ class RideAccessibilityService : AccessibilityService() {
 
     override fun onInterrupt() = Unit
     override fun onDestroy() {
+        mainHandler.removeCallbacksAndMessages(null)
         instance = null
         foregroundPackage = ""
         super.onDestroy()

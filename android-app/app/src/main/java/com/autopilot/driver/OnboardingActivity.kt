@@ -31,6 +31,7 @@ class OnboardingActivity : AppCompatActivity() {
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             prefs.captureGranted = true
+            prefs.autopilotEnabled = true
             val serviceIntent = Intent(this, ScreenReaderService::class.java).apply {
                 putExtra(ScreenReaderService.EXTRA_RESULT_CODE, result.resultCode)
                 putExtra(ScreenReaderService.EXTRA_RESULT_DATA, result.data)
