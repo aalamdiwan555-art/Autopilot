@@ -7,15 +7,18 @@
     <color name="autopilot_muted">#9AA7C0</color>
     <color name="autopilot_success">#45D483</color>
 
-    <!-- XML layout me jo naam maang raha hai unke aliases -->
-    <color name="text_primary">#F4F7FF</color>        <!-- = autopilot_text -->
-    <color name="text_secondary">#9AA7C0</color>      <!-- = autopilot_muted -->
-    <color name="text_muted">#9AA7C0</color>          <!-- = autopilot_muted -->
-    
-    <color name="brand_mint">#45D483</color>          <!-- = autopilot_success -->
-    <color name="brand_blue">#2D7DFF</color>          <!-- = autopilot_primary -->
-    <color name="brand_amber">#F59E0B</color>         <!-- Orange add kiya -->
-    
-    <color name="ink_950">#0A0E1A</color>             <!-- = autopilot_background -->
-    <color name="ink_700">#121827</color>             <!-- = autopilot_card -->
+    <!-- Layout aliases -->
+    <color name="text_primary">#F4F7FF</color>
+    <color name="text_secondary">#9AA7C0</color>
+    <color name="text_muted">#9AA7C0</color>
+    <color name="brand_mint">#45D483</color>
+    <color name="brand_blue">#2D7DFF</color>
+    <color name="brand_amber">#F59E0B</color>
+    <color name="ink_950">#0A0E1A</color>
+    <color name="ink_700">#121827</color>
+
+    <!-- Naye missing colors -->
+    <color name="danger">#EF4444</color>      <!-- Red for error button -->
+    <color name="black">#000</color>       <!-- For launcher icon -->
+    <color name="white">#FFFFFF</color>
 </resources>
