@@ -19,7 +19,7 @@ function Calendar({
   buttonVariant = "ghost",
   formatters,
   components,
-  ...props
+ ...props
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
 }) {
@@ -38,7 +38,7 @@ function Calendar({
       formatters={{
         formatMonthDropdown: (date) =>
           date.toLocaleString("default", { month: "short" }),
-        ...formatters,
+       ...formatters,
       }}
       classNames={{
         root: cn("w-fit", defaultClassNames.root),
@@ -80,7 +80,7 @@ function Calendar({
         caption_label: cn(
           "select-none font-medium",
           captionLayout === "label"
-            ? "text-sm"
+           ? "text-sm"
             : "[&>svg]:text-muted-foreground flex h-8 items-center gap-1 rounded-md pl-2 pr-1 text-sm [&>svg]:size-3.5",
           defaultClassNames.caption_label
         ),
@@ -122,20 +122,20 @@ function Calendar({
           defaultClassNames.disabled
         ),
         hidden: cn("invisible", defaultClassNames.hidden),
-        ...classNames,
+       ...classNames,
       }}
       components={{
-        Root: ({ className, rootRef, ...props }) => {
+        Root: ({ className, ref,...props }) => {
           return (
             <div
               data-slot="calendar"
-              ref={rootRef}
+              ref={ref}
               className={cn(className)}
               {...props}
             />
           )
         },
-        Chevron: ({ className, orientation, ...props }) => {
+        Chevron: ({ className, orientation,...props }) => {
           if (orientation === "left") {
             return (
               <ChevronLeftIcon className={cn("size-4", className)} {...props} />
@@ -156,7 +156,7 @@ function Calendar({
           )
         },
         DayButton: CalendarDayButton,
-        WeekNumber: ({ children, ...props }) => {
+        WeekNumber: ({ children,...props }) => {
           return (
             <td {...props}>
               <div className="flex size-[--cell-size] items-center justify-center text-center">
@@ -165,7 +165,7 @@ function Calendar({
             </td>
           )
         },
-        ...components,
+       ...components,
       }}
       {...props}
     />
@@ -176,7 +176,7 @@ function CalendarDayButton({
   className,
   day,
   modifiers,
-  ...props
+ ...props
 }: React.ComponentProps<typeof DayButton>) {
   const defaultClassNames = getDefaultClassNames()
 
@@ -193,9 +193,9 @@ function CalendarDayButton({
       data-day={day.date.toLocaleDateString()}
       data-selected-single={
         modifiers.selected &&
-        !modifiers.range_start &&
-        !modifiers.range_end &&
-        !modifiers.range_middle
+       !modifiers.range_start &&
+       !modifiers.range_end &&
+       !modifiers.range_middle
       }
       data-range-start={modifiers.range_start}
       data-range-end={modifiers.range_end}
