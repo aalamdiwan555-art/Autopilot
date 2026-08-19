@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 modules = ["nodejs-24", "java-graalvm22.3", "postgresql-16"]
+=======
+modules = ["nodejs-24", "java-graalvm22.3"]
+>>>>>>> 3209c95 (Rebuild Autopilot native Android app)
 
 [deployment]
 router = "application"

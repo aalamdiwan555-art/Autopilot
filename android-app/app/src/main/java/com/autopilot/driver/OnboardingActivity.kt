@@ -31,6 +31,15 @@ class OnboardingActivity : AppCompatActivity() {
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             prefs.captureGranted = true
+            val serviceIntent = Intent(this, ScreenReaderService::class.java).apply {
+                putExtra(ScreenReaderService.EXTRA_RESULT_CODE, result.resultCode)
+                putExtra(ScreenReaderService.EXTRA_RESULT_DATA, result.data)
+            }
+            if (Build.VERSION.SDK_INT >= 26) {
+                androidx.core.content.ContextCompat.startForegroundService(this, serviceIntent)
+            } else {
+                startService(serviceIntent)
+            }
         } else {
             Toast.makeText(this, "Screen capture is required to read ride details.", Toast.LENGTH_SHORT).show()
         }

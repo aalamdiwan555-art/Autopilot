@@ -14,11 +14,6 @@
         android:allowBackup="false"
         android:supportsRtl="true">
         <activity
-            android:name="com.startapp.sdk.adsbase.StartAppSDK$Activity"
-            android:configChanges="orientation|screenSize"
-            android:theme="@android:style/Theme.Translucent"
-            android:exported="false" />
-        <activity
             android:name=".OnboardingActivity"
             android:exported="true">
             <intent-filter>

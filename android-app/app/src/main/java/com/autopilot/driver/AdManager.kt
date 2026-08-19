@@ -7,11 +7,10 @@ import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import com.startapp.sdk.adsbase.Ad
+import com.startapp.sdk.adsbase.StartAppAd
 import com.startapp.sdk.adsbase.adlisteners.AdEventListener
 import com.startapp.sdk.adsbase.adlisteners.VideoListener
 import com.startapp.sdk.adsbase.model.AdPreferences
-import com.startapp.sdk.adsbase.model.Impression
-import com.startapp.sdk.ads.video.RewardedVideo
 
 /**
  * Keeps exactly one rewarded instance alive and waits for late inventory.
@@ -23,7 +22,7 @@ object AdManager {
     private const val WAIT_MS = 60_000L
     private const val POLL_MS = 500L
     private val handler = Handler(Looper.getMainLooper())
-    private var rewardedAd: RewardedVideo? = null
+    private var rewardedAd: StartAppAd? = null
     private var loading = false
 
     @Synchronized
@@ -31,9 +30,9 @@ object AdManager {
         if (loading || rewardedAd?.isReady == true) return
         loading = true
         try {
-            val ad = RewardedVideo(context.applicationContext)
+            val ad = StartAppAd(context.applicationContext)
             rewardedAd = ad
-            ad.load(object : AdEventListener {
+            ad.loadAd(StartAppAd.AdMode.REWARDED_VIDEO, AdPreferences(), object : AdEventListener {
                 override fun onReceiveAd(ad: Ad) {
                     loading = false
                     Log.d(TAG, "Ad Loaded")
@@ -44,8 +43,6 @@ object AdManager {
                     Log.e(TAG, "Failed to load rewarded ad")
                     handler.postDelayed({ loadRewardedAd(context.applicationContext) }, RETRY_MS)
                 }
-                override fun onClick(ad: Ad) = Unit
-                override fun onImpression(ad: Ad) = Unit
             })
         } catch (error: Exception) {
             loading = false
@@ -65,22 +62,18 @@ object AdManager {
             val ad = rewardedAd
             if (ad?.isReady == true) {
                 try {
-                    ad.show(object : AdEventListener {
-                        override fun onReceiveAd(ad: Ad) = Unit
-                        override fun onFailedToReceiveAd(ad: Ad) {
-                            Toast.makeText(activity, "No ads available. Try again", Toast.LENGTH_LONG).show()
-                            onUnavailable()
-                            loadRewardedAd(activity.applicationContext)
-                        }
-                        override fun onClick(ad: Ad) = Unit
-                        override fun onImpression(ad: Ad) = Unit
-                    }, object : VideoListener {
+                    ad.setVideoListener(object : VideoListener {
                         override fun onVideoCompleted() {
                             onCompleted()
                             rewardedAd = null
                             loadRewardedAd(activity.applicationContext)
                         }
                     })
+                    if (!ad.showAd()) {
+                        Toast.makeText(activity, "No ads available. Try again", Toast.LENGTH_LONG).show()
+                        onUnavailable()
+                        loadRewardedAd(activity.applicationContext)
+                    }
                 } catch (error: Exception) {
                     Log.e(TAG, "Could not show rewarded ad", error)
                     onUnavailable()

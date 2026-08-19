@@ -20,6 +20,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var rewardProgress: TextView
     private var rewardLoading = false
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val permissionStatus = mutableMapOf<String, TextView>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,11 +71,17 @@ class MainActivity : AppCompatActivity() {
 
         val setup = card("ONE-TIME SETUP")
         overlayStatus = text("", 14, R.color.autopilot_text)
-        setup.addView(setupRow("Accessibility", RideAccessibilityService.isEnabled(this), Settings.ACTION_ACCESSIBILITY_SETTINGS))
-        setup.addView(setupRow("Floating control", overlayAllowed(), null))
-        setup.addView(setupRow("Screen capture", prefs.captureGranted, null))
-        setup.addView(setupRow("Notification", Build.VERSION.SDK_INT < 33 || checkSelfPermission("android.permission.POST_NOTIFICATIONS") == 0, null))
-        setup.addView(setupRow("Internet", true, null))
+        setup.addView(setupRow("Accessibility", RideAccessibilityService.isEnabled(this)) {
+            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        })
+        setup.addView(setupRow("Floating control", overlayAllowed()) {
+            if (Build.VERSION.SDK_INT >= 23) {
+                startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+            }
+        })
+        setup.addView(setupRow("Screen capture", prefs.captureGranted))
+        setup.addView(setupRow("Notification", Build.VERSION.SDK_INT < 33 || checkSelfPermission("android.permission.POST_NOTIFICATIONS") == 0))
+        setup.addView(setupRow("Internet", true))
         content.addView(setup)
 
         val supported = card("SUPPORTED APPS")
@@ -104,19 +111,33 @@ class MainActivity : AppCompatActivity() {
         return root
     }
 
-    private fun setupRow(label: String, granted: Boolean, settingsAction: String?): LinearLayout =
+    private fun setupRow(label: String, granted: Boolean, settingsAction: (() -> Unit)? = null): LinearLayout =
         LinearLayout(this).apply {
             gravity = Gravity.CENTER_VERTICAL
             addView(text(label, 14, R.color.autopilot_text), LinearLayout.LayoutParams(0, dp(44), 1f))
-            addView(text(if (granted) "✓" else "Grant", 14, if (granted) R.color.autopilot_success else R.color.autopilot_primary).apply {
-                if (settingsAction != null) setOnClickListener { startActivity(Intent(settingsAction)) }
-            })
+            val status = text(if (granted) "✓" else "Grant", 14, if (granted) R.color.autopilot_success else R.color.autopilot_primary)
+            if (settingsAction != null) status.setOnClickListener { settingsAction() }
+            permissionStatus[label] = status
+            addView(status)
         }
 
     private fun refreshPermissions() {
         val overlay = overlayAllowed()
         if (::overlayStatus.isInitialized) overlayStatus.text = if (overlay) "Floating control enabled ✓" else "Floating control needs access"
         if (::overlayStatus.isInitialized) overlayStatus.setTextColor(c(if (overlay) R.color.autopilot_success else R.color.autopilot_muted))
+        val states = mapOf(
+            "Accessibility" to RideAccessibilityService.isEnabled(this),
+            "Floating control" to overlay,
+            "Screen capture" to prefs.captureGranted,
+            "Notification" to (Build.VERSION.SDK_INT < 33 || checkSelfPermission("android.permission.POST_NOTIFICATIONS") == 0),
+            "Internet" to true,
+        )
+        states.forEach { (label, granted) ->
+            permissionStatus[label]?.apply {
+                text = if (granted) "✓" else "Grant"
+                setTextColor(c(if (granted) R.color.autopilot_success else R.color.autopilot_primary))
+            }
+        }
         if (::rewardProgress.isInitialized) rewardProgress.text = "Reward ${prefs.rewardCount}/10"
     }
 
