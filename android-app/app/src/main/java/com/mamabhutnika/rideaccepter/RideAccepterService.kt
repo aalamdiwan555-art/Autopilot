@@ -125,19 +125,33 @@ class RideAccepterService : AccessibilityService() {
         if (clickScheduled || System.currentTimeMillis() - lastClickTime < CLICK_COOLDOWN) return
         val labels = ACCEPT_TEXTS + customTexts
 
+        // Do not rely on findAccessibilityNodeInfosByText(): Android's text
+        // lookup can be case-sensitive and miss "ACCEPT", "accept", or mixed
+        // casing such as "AccAPt". Walk the visible tree and normalize text.
+        if (findMatchingNode(root, labels)) scheduleClick(matchedLabel, packageName)
+    }
+
+    private var matchedLabel = ""
+
+    private fun findMatchingNode(
+        node: AccessibilityNodeInfo,
+        labels: Set<String>,
+    ): Boolean {
         for (label in labels) {
-            val nodes = root.findAccessibilityNodeInfosByText(label) ?: continue
-            for (candidate in nodes) {
-                try {
-                    if (isSafeCandidate(candidate, label)) {
-                        scheduleClick(label, packageName)
-                        return
-                    }
-                } finally {
-                    candidate.recycle()
-                }
+            if (isSafeCandidate(node, label)) {
+                matchedLabel = label
+                return true
             }
         }
+        for (index in 0 until node.childCount) {
+            val child = node.getChild(index) ?: continue
+            try {
+                if (findMatchingNode(child, labels)) return true
+            } finally {
+                child.recycle()
+            }
+        }
+        return false
     }
 
     private fun scheduleClick(label: String, packageName: String) {
@@ -154,8 +168,7 @@ class RideAccepterService : AccessibilityService() {
                 // Re-query after the delay. Ride offer cards are frequently
                 // recreated by Compose/RecyclerView and the original node can
                 // become stale before the click is dispatched.
-                val freshNode = root.findAccessibilityNodeInfosByText(label)
-                    ?.firstOrNull { isSafeCandidate(it, label) }
+                val freshNode = findFreshCandidate(root, label)
                 if (freshNode != null && performClick(freshNode)) {
                     lastClickTime = System.currentTimeMillis()
                     Log.i(TAG, "Accepted guarded ride control '$label' in $packageName")
@@ -189,6 +202,23 @@ class RideAccepterService : AccessibilityService() {
         }
         return exactMatch && !blocked && node.isEnabled && node.isVisibleToUser &&
             (node.isClickable || hasClickableParent(node) || hasVisibleBounds(node))
+    }
+
+    private fun findFreshCandidate(
+        node: AccessibilityNodeInfo,
+        label: String,
+    ): AccessibilityNodeInfo? {
+        if (isSafeCandidate(node, label)) return AccessibilityNodeInfo.obtain(node)
+        for (index in 0 until node.childCount) {
+            val child = node.getChild(index) ?: continue
+            try {
+                val match = findFreshCandidate(child, label)
+                if (match != null) return match
+            } finally {
+                child.recycle()
+            }
+        }
+        return null
     }
 
     private fun normalize(value: String): String {
