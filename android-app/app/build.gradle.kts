@@ -15,6 +15,19 @@ android {
         versionName = "1.0"
     }
 
+    val startIoAppId = providers.gradleProperty("STARTIO_APP_ID").orElse(
+        providers.environmentVariable("STARTIO_APP_ID").orElse("")
+    ).get()
+    val escapedStartIoAppId = startIoAppId.replace("\\", "\\\\").replace("\"", "\\\"")
+    buildTypes.all {
+        buildConfigField("String", "STARTIO_APP_ID", "\"$escapedStartIoAppId\"")
+        buildConfigField(
+            "Boolean",
+            "STARTIO_TEST_MODE",
+            providers.gradleProperty("STARTIO_TEST_MODE").orElse("true").get()
+        )
+    }
+
     buildFeatures { viewBinding = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -31,6 +44,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-service:2.8.6")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-    implementation("com.google.android.gms:play-services-ads:23.0.0")
+    implementation("com.startapp:inapp-sdk:4.10.4")
     implementation("com.google.mlkit:text-recognition:16.0.0")
 }

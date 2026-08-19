@@ -2,6 +2,4 @@
     <string name="app_name">Autopilot</string>
     <string name="accessibility_service_label">Autopilot ride automation</string>
     <string name="accessibility_service_description">Reads ride offer controls in Rapido, Ola, and Uber to assist with accepting rides.</string>
-    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
-    <string name="admob_rewarded_id">ca-app-pub-3940256099942544/5224354917</string>
 </resources>

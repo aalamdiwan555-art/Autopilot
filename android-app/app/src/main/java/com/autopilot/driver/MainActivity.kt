@@ -12,12 +12,6 @@ import android.view.Gravity
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
-import com.google.android.gms.ads.FullScreenContentCallback
-import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.rewarded.RewardItem
 
 class MainActivity : AppCompatActivity() {
     private lateinit var prefs: AppPrefs
@@ -51,10 +45,11 @@ class MainActivity : AppCompatActivity() {
         }
         val scroll = ScrollView(this)
         val content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        val banner = AdView(this).apply {
-            setAdSize(AdSize.BANNER)
-            adUnitId = "ca-app-pub-3940256099942544/6300978111"
-            loadAd(AdRequest.Builder().build())
+        val banner = TextView(this).apply {
+            text = "ADVERTISEMENT"
+            gravity = Gravity.CENTER
+            textSize = 10f
+            setTextColor(c(R.color.autopilot_muted))
         }
         content.addView(banner, LinearLayout.LayoutParams(-1, dp(52)))
         rewardedButton = Button(this).apply {
@@ -130,43 +125,19 @@ class MainActivity : AppCompatActivity() {
         rewardLoading = true
         rewardedButton.isEnabled = false
         rewardedButton.text = "Loading reward…"
-        var finished = false
-        val timeout = Runnable {
-            if (!finished) {
-                finished = true
-                rewardLoading = false
-                rewardedButton.isEnabled = true
-                rewardedButton.text = "Watch an ad — earn a day"
-                Toast.makeText(this, "No ads available. Try again", Toast.LENGTH_LONG).show()
-            }
-        }
-        mainHandler.postDelayed(timeout, 60_000)
-        val app = application as MyApplication
-        val ad = app.rewardedAd
-        if (ad == null) {
-            app.preloadRewarded()
-            mainHandler.postDelayed(timeout, 0)
-            return
-        }
-        ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-            override fun onAdDismissedFullScreenContent() { app.preloadRewarded() }
-            override fun onAdFailedToShowFullScreenContent(error: com.google.android.gms.ads.AdError) { timeout.run() }
-        }
-        ad.show(this) { _: RewardItem ->
-            if (!finished) {
-                finished = true
-                mainHandler.removeCallbacks(timeout)
-                prefs.rewardDays += 1
-                prefs.rewardCount = (prefs.rewardCount + 1) % 10
-                rewardLoading = false
-                rewardedButton.isEnabled = true
-                rewardedButton.text = "Watch an ad — earn a day"
-                refreshPermissions()
-                Toast.makeText(this, "Reward added for one day.", Toast.LENGTH_SHORT).show()
-                app.rewardedAd = null
-                app.preloadRewarded()
-            }
-        }
+        AdManager.showRewardedAd(this, {
+            prefs.rewardDays += 1
+            prefs.rewardCount = (prefs.rewardCount + 1) % 10
+            rewardLoading = false
+            rewardedButton.isEnabled = true
+            rewardedButton.text = "Watch an ad — earn a day"
+            refreshPermissions()
+            Toast.makeText(this, "Reward added for one day.", Toast.LENGTH_SHORT).show()
+        }, {
+            rewardLoading = false
+            rewardedButton.isEnabled = true
+            rewardedButton.text = "Watch an ad — earn a day"
+        })
     }
 
     private fun overlayAllowed() = Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(this)
