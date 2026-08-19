@@ -28,6 +28,10 @@ export interface MobileLoginInput {
   password: string;
 }
 
+export interface MobileForgotPasswordInput {
+  email: string;
+}
+
 export interface ReferralInput {
   /** @minLength 1 */
   referralCode: string;
@@ -35,9 +39,9 @@ export interface ReferralInput {
 
 export interface GrantDaysInput {
   /**
-   * @minimum 1
-   * @maximum 3650
-   */
+     * @minimum 1
+     * @maximum 3650
+     */
   days: number;
 }
 
@@ -94,3 +98,4 @@ export type ConflictResponse = ErrorResponse;
  * Resource not found
  */
 export type NotFoundResponse = ErrorResponse;
+

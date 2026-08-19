@@ -8,6 +8,8 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
@@ -35,6 +37,17 @@ class SignupActivity : AppCompatActivity() {
         etReferralCode = findViewById(R.id.etReferralCode)
         btnSignup = findViewById(R.id.btnSignup)
         btnLogin = findViewById(R.id.btnLogin)
+        findViewById<View>(R.id.tvLogo).animate()
+            .translationY(-6f)
+            .setDuration(2200L)
+            .setInterpolator(AccelerateDecelerateInterpolator())
+            .withEndAction {
+                findViewById<View>(R.id.tvLogo).animate()
+                    .translationY(0f)
+                    .setDuration(2200L)
+                    .setInterpolator(AccelerateDecelerateInterpolator())
+                    .start()
+            }.start()
 
         btnSignup.setOnClickListener {
             val name = etName.text.toString().trim()

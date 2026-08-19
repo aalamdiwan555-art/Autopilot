@@ -279,6 +279,13 @@ export async function signInWithSupabase(
   return { token: session.access_token, user };
 }
 
+export async function requestPasswordReset(email: string): Promise<void> {
+  await supabaseRequest("/auth/v1/recover", {
+    method: "POST",
+    body: JSON.stringify({ email: normalizeEmail(email) }),
+  });
+}
+
 export async function updateAppUser(
   user: AppUser,
   changes: Partial<AppUser>,

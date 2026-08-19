@@ -5,7 +5,10 @@
  * Mobile subscription and referral API for Mama Bhutnika
  * OpenAPI spec version: 0.1.0
  */
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   MutationFunction,
   QueryFunction,
@@ -13,8 +16,8 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
 import type {
   AdminUsersResponse,
@@ -25,32 +28,33 @@ import type {
   GrantDaysInput,
   HealthStatus,
   MessageResponse,
+  MobileForgotPasswordInput,
   MobileLoginInput,
   MobileSignupInput,
   NotFoundResponse,
   ReferralInput,
   UnauthorizedResponse,
-  UserResponse,
-} from "./api.schemas";
+  UserResponse
+} from './api.schemas';
 
-import { customFetch } from "../custom-fetch";
-import type { ErrorType, BodyType } from "../custom-fetch";
+import { customFetch } from '../custom-fetch';
+import type { ErrorType , BodyType } from '../custom-fetch';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
+      type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-const withQueryKey = <T extends object, K>(
-  query: T,
-  queryKey: K,
-): T & { queryKey: K } => {
+
+
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
     // The explicit queryKey always wins, matching the previous
     // `{ ...query, queryKey }` spread where it was set last.
-    if (key === "queryKey") continue;
+    if (key === 'queryKey') continue;
     Object.defineProperty(result, key, {
       enumerable: true,
       configurable: true,
@@ -61,672 +65,660 @@ const withQueryKey = <T extends object, K>(
 };
 
 export const getHealthCheckUrl = () => {
-  return `/api/healthz`;
-};
+
+
+
+
+  return `/api/healthz`
+}
 
 /**
  * @summary Health check
  */
-export const healthCheck = async (
-  options?: Parameters<typeof customFetch>[1],
-): Promise<HealthStatus> => {
-  return customFetch<HealthStatus>(getHealthCheckUrl(), {
+export const healthCheck = async ( options?: Parameters<typeof customFetch>[1]): Promise<HealthStatus> => {
+
+  return customFetch<HealthStatus>(getHealthCheckUrl(),
+  {
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
 
 export const getHealthCheckQueryKey = () => {
-  return [`/api/healthz`] as const;
-};
+    return [
+    `/api/healthz`
+    ] as const;
+    }
 
-export const getHealthCheckQueryOptions = <
-  TData = Awaited<ReturnType<typeof healthCheck>>,
-  TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof healthCheck>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getHealthCheckQueryKey();
+export const getHealthCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof healthCheck>>> = ({
-    signal,
-  }) => healthCheck({ signal, ...requestOptions });
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof healthCheck>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
+  const queryKey =  queryOptions?.queryKey ?? getHealthCheckQueryKey();
 
-export type HealthCheckQueryResult = NonNullable<
-  Awaited<ReturnType<typeof healthCheck>>
->;
-export type HealthCheckQueryError = ErrorType<unknown>;
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof healthCheck>>> = ({ signal }) => healthCheck({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type HealthCheckQueryResult = NonNullable<Awaited<ReturnType<typeof healthCheck>>>
+export type HealthCheckQueryError = ErrorType<unknown>
+
 
 /**
  * @summary Health check
  */
 
-export function useHealthCheck<
-  TData = Awaited<ReturnType<typeof healthCheck>>,
-  TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof healthCheck>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getHealthCheckQueryOptions(options);
+export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getHealthCheckQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
+
 
 export const getMobileSignupUrl = () => {
-  return `/api/mobile/auth/signup`;
-};
+
+
+
+
+  return `/api/mobile/auth/signup`
+}
 
 /**
  * @summary Create a mobile account
  */
-export const mobileSignup = async (
-  mobileSignupInput: MobileSignupInput,
-  options?: Parameters<typeof customFetch>[1],
-): Promise<AuthResponse> => {
-  return customFetch<AuthResponse>(getMobileSignupUrl(), {
+export const mobileSignup = async (mobileSignupInput: MobileSignupInput, options?: Parameters<typeof customFetch>[1]): Promise<AuthResponse> => {
+
+  return customFetch<AuthResponse>(getMobileSignupUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(mobileSignupInput),
-  });
-};
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(mobileSignupInput)
+  }
+);}
 
-export const getMobileSignupMutationOptions = <
-  TError = ErrorType<BadRequestResponse | ConflictResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof mobileSignup>>,
-    TError,
-    { data: BodyType<MobileSignupInput> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof mobileSignup>>,
-  TError,
-  { data: BodyType<MobileSignupInput> },
-  TContext
-> => {
-  const mutationKey = ["mobileSignup"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof mobileSignup>>,
-    { data: BodyType<MobileSignupInput> }
-  > = (props) => {
-    const { data } = props ?? {};
 
-    return mobileSignup(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type MobileSignupMutationResult = NonNullable<
-  Awaited<ReturnType<typeof mobileSignup>>
->;
-export type MobileSignupMutationBody = BodyType<MobileSignupInput>;
-export type MobileSignupMutationError = ErrorType<
-  BadRequestResponse | ConflictResponse
->;
+export const getMobileSignupMutationOptions = <TError = ErrorType<BadRequestResponse | ConflictResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mobileSignup>>, TError,{data: BodyType<MobileSignupInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof mobileSignup>>, TError,{data: BodyType<MobileSignupInput>}, TContext> => {
 
-/**
+const mutationKey = ['mobileSignup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof mobileSignup>>, {data: BodyType<MobileSignupInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  mobileSignup(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MobileSignupMutationResult = NonNullable<Awaited<ReturnType<typeof mobileSignup>>>
+    export type MobileSignupMutationBody = BodyType<MobileSignupInput>
+    export type MobileSignupMutationError = ErrorType<BadRequestResponse | ConflictResponse>
+
+    /**
  * @summary Create a mobile account
  */
-export const useMobileSignup = <
-  TError = ErrorType<BadRequestResponse | ConflictResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof mobileSignup>>,
-    TError,
-    { data: BodyType<MobileSignupInput> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof mobileSignup>>,
-  TError,
-  { data: BodyType<MobileSignupInput> },
-  TContext
-> => {
-  return useMutation(getMobileSignupMutationOptions(options));
-};
+export const useMobileSignup = <TError = ErrorType<BadRequestResponse | ConflictResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mobileSignup>>, TError,{data: BodyType<MobileSignupInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof mobileSignup>>,
+        TError,
+        {data: BodyType<MobileSignupInput>},
+        TContext
+      > => {
+      return useMutation(getMobileSignupMutationOptions(options));
+    }
 
 export const getMobileLoginUrl = () => {
-  return `/api/mobile/auth/login`;
-};
+
+
+
+
+  return `/api/mobile/auth/login`
+}
 
 /**
  * @summary Sign in to a mobile account
  */
-export const mobileLogin = async (
-  mobileLoginInput: MobileLoginInput,
-  options?: Parameters<typeof customFetch>[1],
-): Promise<AuthResponse> => {
-  return customFetch<AuthResponse>(getMobileLoginUrl(), {
+export const mobileLogin = async (mobileLoginInput: MobileLoginInput, options?: Parameters<typeof customFetch>[1]): Promise<AuthResponse> => {
+
+  return customFetch<AuthResponse>(getMobileLoginUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(mobileLoginInput),
-  });
-};
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(mobileLoginInput)
+  }
+);}
 
-export const getMobileLoginMutationOptions = <
-  TError = ErrorType<BadRequestResponse | UnauthorizedResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof mobileLogin>>,
-    TError,
-    { data: BodyType<MobileLoginInput> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof mobileLogin>>,
-  TError,
-  { data: BodyType<MobileLoginInput> },
-  TContext
-> => {
-  const mutationKey = ["mobileLogin"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof mobileLogin>>,
-    { data: BodyType<MobileLoginInput> }
-  > = (props) => {
-    const { data } = props ?? {};
 
-    return mobileLogin(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type MobileLoginMutationResult = NonNullable<
-  Awaited<ReturnType<typeof mobileLogin>>
->;
-export type MobileLoginMutationBody = BodyType<MobileLoginInput>;
-export type MobileLoginMutationError = ErrorType<
-  BadRequestResponse | UnauthorizedResponse
->;
+export const getMobileLoginMutationOptions = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mobileLogin>>, TError,{data: BodyType<MobileLoginInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof mobileLogin>>, TError,{data: BodyType<MobileLoginInput>}, TContext> => {
 
-/**
+const mutationKey = ['mobileLogin'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof mobileLogin>>, {data: BodyType<MobileLoginInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  mobileLogin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MobileLoginMutationResult = NonNullable<Awaited<ReturnType<typeof mobileLogin>>>
+    export type MobileLoginMutationBody = BodyType<MobileLoginInput>
+    export type MobileLoginMutationError = ErrorType<BadRequestResponse | UnauthorizedResponse>
+
+    /**
  * @summary Sign in to a mobile account
  */
-export const useMobileLogin = <
-  TError = ErrorType<BadRequestResponse | UnauthorizedResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof mobileLogin>>,
-    TError,
-    { data: BodyType<MobileLoginInput> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof mobileLogin>>,
-  TError,
-  { data: BodyType<MobileLoginInput> },
-  TContext
-> => {
-  return useMutation(getMobileLoginMutationOptions(options));
-};
+export const useMobileLogin = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mobileLogin>>, TError,{data: BodyType<MobileLoginInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof mobileLogin>>,
+        TError,
+        {data: BodyType<MobileLoginInput>},
+        TContext
+      > => {
+      return useMutation(getMobileLoginMutationOptions(options));
+    }
+
+export const getMobileForgotPasswordUrl = () => {
+
+
+
+
+  return `/api/mobile/auth/forgot-password`
+}
+
+/**
+ * @summary Request a password reset email
+ */
+export const mobileForgotPassword = async (mobileForgotPasswordInput: MobileForgotPasswordInput, options?: Parameters<typeof customFetch>[1]): Promise<MessageResponse> => {
+
+  return customFetch<MessageResponse>(getMobileForgotPasswordUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(mobileForgotPasswordInput)
+  }
+);}
+
+
+
+
+
+export const getMobileForgotPasswordMutationOptions = <TError = ErrorType<BadRequestResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mobileForgotPassword>>, TError,{data: BodyType<MobileForgotPasswordInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof mobileForgotPassword>>, TError,{data: BodyType<MobileForgotPasswordInput>}, TContext> => {
+
+const mutationKey = ['mobileForgotPassword'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof mobileForgotPassword>>, {data: BodyType<MobileForgotPasswordInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  mobileForgotPassword(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MobileForgotPasswordMutationResult = NonNullable<Awaited<ReturnType<typeof mobileForgotPassword>>>
+    export type MobileForgotPasswordMutationBody = BodyType<MobileForgotPasswordInput>
+    export type MobileForgotPasswordMutationError = ErrorType<BadRequestResponse>
+
+    /**
+ * @summary Request a password reset email
+ */
+export const useMobileForgotPassword = <TError = ErrorType<BadRequestResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mobileForgotPassword>>, TError,{data: BodyType<MobileForgotPasswordInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof mobileForgotPassword>>,
+        TError,
+        {data: BodyType<MobileForgotPasswordInput>},
+        TContext
+      > => {
+      return useMutation(getMobileForgotPasswordMutationOptions(options));
+    }
 
 export const getMobileMeUrl = () => {
-  return `/api/mobile/me`;
-};
+
+
+
+
+  return `/api/mobile/me`
+}
 
 /**
  * @summary Get the current mobile account
  */
-export const mobileMe = async (
-  options?: Parameters<typeof customFetch>[1],
-): Promise<UserResponse> => {
-  return customFetch<UserResponse>(getMobileMeUrl(), {
+export const mobileMe = async ( options?: Parameters<typeof customFetch>[1]): Promise<UserResponse> => {
+
+  return customFetch<UserResponse>(getMobileMeUrl(),
+  {
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
 
 export const getMobileMeQueryKey = () => {
-  return [`/api/mobile/me`] as const;
-};
+    return [
+    `/api/mobile/me`
+    ] as const;
+    }
 
-export const getMobileMeQueryOptions = <
-  TData = Awaited<ReturnType<typeof mobileMe>>,
-  TError = ErrorType<UnauthorizedResponse>,
->(options?: {
-  query?: UseQueryOptions<Awaited<ReturnType<typeof mobileMe>>, TError, TData>;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getMobileMeQueryKey();
+export const getMobileMeQueryOptions = <TData = Awaited<ReturnType<typeof mobileMe>>, TError = ErrorType<UnauthorizedResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof mobileMe>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof mobileMe>>> = ({
-    signal,
-  }) => mobileMe({ signal, ...requestOptions });
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof mobileMe>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
+  const queryKey =  queryOptions?.queryKey ?? getMobileMeQueryKey();
 
-export type MobileMeQueryResult = NonNullable<
-  Awaited<ReturnType<typeof mobileMe>>
->;
-export type MobileMeQueryError = ErrorType<UnauthorizedResponse>;
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof mobileMe>>> = ({ signal }) => mobileMe({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof mobileMe>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type MobileMeQueryResult = NonNullable<Awaited<ReturnType<typeof mobileMe>>>
+export type MobileMeQueryError = ErrorType<UnauthorizedResponse>
+
 
 /**
  * @summary Get the current mobile account
  */
 
-export function useMobileMe<
-  TData = Awaited<ReturnType<typeof mobileMe>>,
-  TError = ErrorType<UnauthorizedResponse>,
->(options?: {
-  query?: UseQueryOptions<Awaited<ReturnType<typeof mobileMe>>, TError, TData>;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getMobileMeQueryOptions(options);
+export function useMobileMe<TData = Awaited<ReturnType<typeof mobileMe>>, TError = ErrorType<UnauthorizedResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof mobileMe>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getMobileMeQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
+
 
 export const getMobileRedeemReferralUrl = () => {
-  return `/api/mobile/referrals/redeem`;
-};
+
+
+
+
+  return `/api/mobile/referrals/redeem`
+}
 
 /**
  * @summary Redeem a referral code
  */
-export const mobileRedeemReferral = async (
-  referralInput: ReferralInput,
-  options?: Parameters<typeof customFetch>[1],
-): Promise<MessageResponse> => {
-  return customFetch<MessageResponse>(getMobileRedeemReferralUrl(), {
+export const mobileRedeemReferral = async (referralInput: ReferralInput, options?: Parameters<typeof customFetch>[1]): Promise<MessageResponse> => {
+
+  return customFetch<MessageResponse>(getMobileRedeemReferralUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(referralInput),
-  });
-};
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(referralInput)
+  }
+);}
 
-export const getMobileRedeemReferralMutationOptions = <
-  TError = ErrorType<
-    BadRequestResponse | UnauthorizedResponse | ConflictResponse
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof mobileRedeemReferral>>,
-    TError,
-    { data: BodyType<ReferralInput> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof mobileRedeemReferral>>,
-  TError,
-  { data: BodyType<ReferralInput> },
-  TContext
-> => {
-  const mutationKey = ["mobileRedeemReferral"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof mobileRedeemReferral>>,
-    { data: BodyType<ReferralInput> }
-  > = (props) => {
-    const { data } = props ?? {};
 
-    return mobileRedeemReferral(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type MobileRedeemReferralMutationResult = NonNullable<
-  Awaited<ReturnType<typeof mobileRedeemReferral>>
->;
-export type MobileRedeemReferralMutationBody = BodyType<ReferralInput>;
-export type MobileRedeemReferralMutationError = ErrorType<
-  BadRequestResponse | UnauthorizedResponse | ConflictResponse
->;
+export const getMobileRedeemReferralMutationOptions = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ConflictResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mobileRedeemReferral>>, TError,{data: BodyType<ReferralInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof mobileRedeemReferral>>, TError,{data: BodyType<ReferralInput>}, TContext> => {
 
-/**
+const mutationKey = ['mobileRedeemReferral'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof mobileRedeemReferral>>, {data: BodyType<ReferralInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  mobileRedeemReferral(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MobileRedeemReferralMutationResult = NonNullable<Awaited<ReturnType<typeof mobileRedeemReferral>>>
+    export type MobileRedeemReferralMutationBody = BodyType<ReferralInput>
+    export type MobileRedeemReferralMutationError = ErrorType<BadRequestResponse | UnauthorizedResponse | ConflictResponse>
+
+    /**
  * @summary Redeem a referral code
  */
-export const useMobileRedeemReferral = <
-  TError = ErrorType<
-    BadRequestResponse | UnauthorizedResponse | ConflictResponse
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof mobileRedeemReferral>>,
-    TError,
-    { data: BodyType<ReferralInput> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof mobileRedeemReferral>>,
-  TError,
-  { data: BodyType<ReferralInput> },
-  TContext
-> => {
-  return useMutation(getMobileRedeemReferralMutationOptions(options));
-};
+export const useMobileRedeemReferral = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ConflictResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mobileRedeemReferral>>, TError,{data: BodyType<ReferralInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof mobileRedeemReferral>>,
+        TError,
+        {data: BodyType<ReferralInput>},
+        TContext
+      > => {
+      return useMutation(getMobileRedeemReferralMutationOptions(options));
+    }
 
 export const getMobileRewardAdCompletedUrl = () => {
-  return `/api/mobile/rewards/ad-completed`;
-};
+
+
+
+
+  return `/api/mobile/rewards/ad-completed`
+}
 
 /**
  * @summary Confirm a completed rewarded ad
  */
-export const mobileRewardAdCompleted = async (
-  options?: Parameters<typeof customFetch>[1],
-): Promise<UserResponse> => {
-  return customFetch<UserResponse>(getMobileRewardAdCompletedUrl(), {
+export const mobileRewardAdCompleted = async ( options?: Parameters<typeof customFetch>[1]): Promise<UserResponse> => {
+
+  return customFetch<UserResponse>(getMobileRewardAdCompletedUrl(),
+  {
     ...options,
-    method: "POST",
-  });
-};
+    method: 'POST'
 
-export const getMobileRewardAdCompletedMutationOptions = <
-  TError = ErrorType<UnauthorizedResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof mobileRewardAdCompleted>>,
-    TError,
-    void,
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof mobileRewardAdCompleted>>,
-  TError,
-  void,
-  TContext
-> => {
-  const mutationKey = ["mobileRewardAdCompleted"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof mobileRewardAdCompleted>>,
-    void
-  > = () => {
-    return mobileRewardAdCompleted(requestOptions);
-  };
+  }
+);}
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type MobileRewardAdCompletedMutationResult = NonNullable<
-  Awaited<ReturnType<typeof mobileRewardAdCompleted>>
->;
 
-export type MobileRewardAdCompletedMutationError =
-  ErrorType<UnauthorizedResponse>;
 
-/**
+
+export const getMobileRewardAdCompletedMutationOptions = <TError = ErrorType<UnauthorizedResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mobileRewardAdCompleted>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof mobileRewardAdCompleted>>, TError,void, TContext> => {
+
+const mutationKey = ['mobileRewardAdCompleted'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof mobileRewardAdCompleted>>, void> = () => {
+
+
+          return  mobileRewardAdCompleted(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MobileRewardAdCompletedMutationResult = NonNullable<Awaited<ReturnType<typeof mobileRewardAdCompleted>>>
+
+    export type MobileRewardAdCompletedMutationError = ErrorType<UnauthorizedResponse>
+
+    /**
  * @summary Confirm a completed rewarded ad
  */
-export const useMobileRewardAdCompleted = <
-  TError = ErrorType<UnauthorizedResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof mobileRewardAdCompleted>>,
-    TError,
-    void,
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof mobileRewardAdCompleted>>,
-  TError,
-  void,
-  TContext
-> => {
-  return useMutation(getMobileRewardAdCompletedMutationOptions(options));
-};
+export const useMobileRewardAdCompleted = <TError = ErrorType<UnauthorizedResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mobileRewardAdCompleted>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof mobileRewardAdCompleted>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getMobileRewardAdCompletedMutationOptions(options));
+    }
 
 export const getMobileAdminUsersUrl = () => {
-  return `/api/mobile/admin/users`;
-};
+
+
+
+
+  return `/api/mobile/admin/users`
+}
 
 /**
  * @summary List mobile accounts for an administrator
  */
-export const mobileAdminUsers = async (
-  options?: Parameters<typeof customFetch>[1],
-): Promise<AdminUsersResponse> => {
-  return customFetch<AdminUsersResponse>(getMobileAdminUsersUrl(), {
+export const mobileAdminUsers = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminUsersResponse> => {
+
+  return customFetch<AdminUsersResponse>(getMobileAdminUsersUrl(),
+  {
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
 
 export const getMobileAdminUsersQueryKey = () => {
-  return [`/api/mobile/admin/users`] as const;
-};
+    return [
+    `/api/mobile/admin/users`
+    ] as const;
+    }
 
-export const getMobileAdminUsersQueryOptions = <
-  TData = Awaited<ReturnType<typeof mobileAdminUsers>>,
-  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof mobileAdminUsers>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getMobileAdminUsersQueryKey();
+export const getMobileAdminUsersQueryOptions = <TData = Awaited<ReturnType<typeof mobileAdminUsers>>, TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof mobileAdminUsers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
 
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof mobileAdminUsers>>
-  > = ({ signal }) => mobileAdminUsers({ signal, ...requestOptions });
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof mobileAdminUsers>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
+  const queryKey =  queryOptions?.queryKey ?? getMobileAdminUsersQueryKey();
 
-export type MobileAdminUsersQueryResult = NonNullable<
-  Awaited<ReturnType<typeof mobileAdminUsers>>
->;
-export type MobileAdminUsersQueryError = ErrorType<
-  UnauthorizedResponse | ForbiddenResponse
->;
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof mobileAdminUsers>>> = ({ signal }) => mobileAdminUsers({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof mobileAdminUsers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type MobileAdminUsersQueryResult = NonNullable<Awaited<ReturnType<typeof mobileAdminUsers>>>
+export type MobileAdminUsersQueryError = ErrorType<UnauthorizedResponse | ForbiddenResponse>
+
 
 /**
  * @summary List mobile accounts for an administrator
  */
 
-export function useMobileAdminUsers<
-  TData = Awaited<ReturnType<typeof mobileAdminUsers>>,
-  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof mobileAdminUsers>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getMobileAdminUsersQueryOptions(options);
+export function useMobileAdminUsers<TData = Awaited<ReturnType<typeof mobileAdminUsers>>, TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof mobileAdminUsers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getMobileAdminUsersQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export const getMobileAdminGrantDaysUrl = (uid: string) => {
-  return `/api/mobile/admin/users/${uid}/grant`;
-};
+
+
+
+
+
+
+export const getMobileAdminGrantDaysUrl = (uid: string,) => {
+
+
+
+
+  return `/api/mobile/admin/users/${uid}/grant`
+}
 
 /**
  * @summary Grant subscription days to an account
  */
-export const mobileAdminGrantDays = async (
-  uid: string,
-  grantDaysInput: GrantDaysInput,
-  options?: Parameters<typeof customFetch>[1],
-): Promise<UserResponse> => {
-  return customFetch<UserResponse>(getMobileAdminGrantDaysUrl(uid), {
+export const mobileAdminGrantDays = async (uid: string,
+    grantDaysInput: GrantDaysInput, options?: Parameters<typeof customFetch>[1]): Promise<UserResponse> => {
+
+  return customFetch<UserResponse>(getMobileAdminGrantDaysUrl(uid),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(grantDaysInput),
-  });
-};
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(grantDaysInput)
+  }
+);}
 
-export const getMobileAdminGrantDaysMutationOptions = <
-  TError = ErrorType<
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof mobileAdminGrantDays>>,
-    TError,
-    { uid: string; data: BodyType<GrantDaysInput> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof mobileAdminGrantDays>>,
-  TError,
-  { uid: string; data: BodyType<GrantDaysInput> },
-  TContext
-> => {
-  const mutationKey = ["mobileAdminGrantDays"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof mobileAdminGrantDays>>,
-    { uid: string; data: BodyType<GrantDaysInput> }
-  > = (props) => {
-    const { uid, data } = props ?? {};
 
-    return mobileAdminGrantDays(uid, data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type MobileAdminGrantDaysMutationResult = NonNullable<
-  Awaited<ReturnType<typeof mobileAdminGrantDays>>
->;
-export type MobileAdminGrantDaysMutationBody = BodyType<GrantDaysInput>;
-export type MobileAdminGrantDaysMutationError = ErrorType<
-  | BadRequestResponse
-  | UnauthorizedResponse
-  | ForbiddenResponse
-  | NotFoundResponse
->;
+export const getMobileAdminGrantDaysMutationOptions = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mobileAdminGrantDays>>, TError,{uid: string;data: BodyType<GrantDaysInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof mobileAdminGrantDays>>, TError,{uid: string;data: BodyType<GrantDaysInput>}, TContext> => {
 
-/**
+const mutationKey = ['mobileAdminGrantDays'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof mobileAdminGrantDays>>, {uid: string;data: BodyType<GrantDaysInput>}> = (props) => {
+          const {uid,data} = props ?? {};
+
+          return  mobileAdminGrantDays(uid,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MobileAdminGrantDaysMutationResult = NonNullable<Awaited<ReturnType<typeof mobileAdminGrantDays>>>
+    export type MobileAdminGrantDaysMutationBody = BodyType<GrantDaysInput>
+    export type MobileAdminGrantDaysMutationError = ErrorType<BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse>
+
+    /**
  * @summary Grant subscription days to an account
  */
-export const useMobileAdminGrantDays = <
-  TError = ErrorType<
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof mobileAdminGrantDays>>,
-    TError,
-    { uid: string; data: BodyType<GrantDaysInput> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof mobileAdminGrantDays>>,
-  TError,
-  { uid: string; data: BodyType<GrantDaysInput> },
-  TContext
-> => {
-  return useMutation(getMobileAdminGrantDaysMutationOptions(options));
-};
+export const useMobileAdminGrantDays = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mobileAdminGrantDays>>, TError,{uid: string;data: BodyType<GrantDaysInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof mobileAdminGrantDays>>,
+        TError,
+        {uid: string;data: BodyType<GrantDaysInput>},
+        TContext
+      > => {
+      return useMutation(getMobileAdminGrantDaysMutationOptions(options));
+    }
+

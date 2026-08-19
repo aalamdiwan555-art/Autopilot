@@ -196,7 +196,16 @@ class OnboardingActivity : AppCompatActivity() {
         Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
     private fun openMain() {
-        startActivity(Intent(this, MainActivity::class.java))
+        val authPrefs = getSharedPreferences("mama_bhutnika_prefs", MODE_PRIVATE)
+        val destination = if (
+            authPrefs.getBoolean("is_logged_in", false) &&
+            !authPrefs.getString("api_token", "").isNullOrBlank()
+        ) {
+            MainActivity::class.java
+        } else {
+            com.mamabhutnika.rideaccepter.LoginActivity::class.java
+        }
+        startActivity(Intent(this, destination))
         finish()
     }
     private fun color(id: Int) = ContextCompat.getColor(this, id)

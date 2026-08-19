@@ -15,6 +15,7 @@ export * from './forbiddenResponse';
 export * from './grantDaysInput';
 export * from './healthStatus';
 export * from './messageResponse';
+export * from './mobileForgotPasswordInput';
 export * from './mobileLoginInput';
 export * from './mobileSignupInput';
 export * from './notFoundResponse';
