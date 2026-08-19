@@ -18,6 +18,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var overlayStatus: TextView
     private lateinit var rewardedButton: Button
     private lateinit var rewardProgress: TextView
+    private lateinit var topAd: LinearLayout
+    private lateinit var bottomAd: LinearLayout
     private var rewardLoading = false
     private val mainHandler = Handler(Looper.getMainLooper())
     private val permissionStatus = mutableMapOf<String, TextView>()
@@ -26,6 +28,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         prefs = AppPrefs(this)
         setContentView(buildScreen())
+        AdManager.attachBanner(topAd)
+        AdManager.attachBanner(bottomAd)
     }
 
     override fun onResume() {
@@ -44,15 +48,10 @@ class MainActivity : AppCompatActivity() {
             setBackgroundColor(c(R.color.autopilot_background))
             setPadding(dp(18), dp(16), dp(18), 0)
         }
+        topAd = LinearLayout(this).apply { gravity = Gravity.CENTER }
+        root.addView(topAd, LinearLayout.LayoutParams(-1, dp(56)))
         val scroll = ScrollView(this)
         val content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        val banner = TextView(this).apply {
-            text = "ADVERTISEMENT"
-            gravity = Gravity.CENTER
-            textSize = 10f
-            setTextColor(c(R.color.autopilot_muted))
-        }
-        content.addView(banner, LinearLayout.LayoutParams(-1, dp(52)))
         rewardedButton = Button(this).apply {
             text = "Watch an ad — earn a day"
             isAllCaps = false
@@ -99,12 +98,19 @@ class MainActivity : AppCompatActivity() {
         content.addView(supported)
         scroll.addView(content)
         root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        bottomAd = LinearLayout(this).apply { gravity = Gravity.CENTER }
+        root.addView(bottomAd, LinearLayout.LayoutParams(-1, dp(56)))
         val nav = LinearLayout(this).apply {
             gravity = Gravity.CENTER
             setPadding(0, dp(6), 0, dp(10))
         }
         listOf("Home", "Refer & Earn", "Profile").forEach { label ->
-            nav.addView(Button(this).apply { text = label; isAllCaps = false; setTextColor(Color.WHITE) }, LinearLayout.LayoutParams(0, dp(52), 1f))
+            nav.addView(Button(this).apply {
+                text = label
+                isAllCaps = false
+                setTextColor(Color.WHITE)
+                setOnClickListener { AdManager.showInterstitial(this@MainActivity) }
+            }, LinearLayout.LayoutParams(0, dp(52), 1f))
         }
         root.addView(nav)
         refreshPermissions()
