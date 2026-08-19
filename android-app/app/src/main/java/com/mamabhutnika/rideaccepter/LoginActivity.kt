@@ -25,6 +25,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var tvTrialStatus: TextView
     private lateinit var tvVersion: TextView
     private lateinit var tvLogo: TextView
+    private lateinit var tvForgotPassword: TextView
     private lateinit var prefs: UserPrefs
     private val api = ApiClient()
 
@@ -42,6 +43,7 @@ class LoginActivity : AppCompatActivity() {
         tvTrialStatus = findViewById(R.id.tvTrialStatus)
         tvVersion = findViewById(R.id.tvVersion)
         tvLogo = findViewById(R.id.tvLogo)
+        tvForgotPassword = findViewById(R.id.tvForgotPassword)
 
         tvVersion.text = "Autopilot • v4.0"
         tvTrialStatus.text = "Sign in to check your subscription"
@@ -59,6 +61,9 @@ class LoginActivity : AppCompatActivity() {
 
         btnSignup.setOnClickListener {
             startActivity(Intent(this, SignupActivity::class.java))
+        }
+        tvForgotPassword.setOnClickListener {
+            startActivity(Intent(this, ForgotPasswordActivity::class.java))
         }
 
         validateExistingSession()

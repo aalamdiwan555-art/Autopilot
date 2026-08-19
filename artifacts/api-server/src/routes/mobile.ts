@@ -19,6 +19,7 @@ import {
   listAppUsers,
   normalizeEmail,
   publicUser,
+  requestPasswordReset,
   signInWithSupabase,
   signupWithSupabase,
   updateAppUser,
@@ -104,6 +105,26 @@ router.post("/mobile/auth/login", async (req, res): Promise<void> => {
       res,
       status === 500 ? 500 : status,
       status === 500 ? "The account service is unavailable." : "Email or password is incorrect.",
+    );
+  }
+});
+
+router.post("/mobile/auth/forgot-password", async (req, res): Promise<void> => {
+  const email =
+    typeof req.body?.email === "string" ? normalizeEmail(req.body.email) : "";
+  if (!validEmail(email)) {
+    error(res, 400, "Enter a valid email address.");
+    return;
+  }
+
+  try {
+    await requestPasswordReset(email);
+    res.json({ message: "If an account exists for that email, a reset link is on its way." });
+  } catch (errorValue) {
+    error(
+      res,
+      supabaseErrorStatus(errorValue),
+      supabaseErrorMessage(errorValue, "The password reset service is unavailable."),
     );
   }
 });

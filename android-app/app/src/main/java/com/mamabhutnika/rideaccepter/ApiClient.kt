@@ -89,6 +89,14 @@ class ApiClient {
         authResult(request("POST", "/mobile/auth/login", body))
     }
 
+    suspend fun requestPasswordReset(email: String): String = withContext(Dispatchers.IO) {
+        request(
+            "POST",
+            "/mobile/auth/forgot-password",
+            JSONObject().put("email", email),
+        ).optString("message", "If an account exists, a reset link is on its way.")
+    }
+
     suspend fun me(token: String): RemoteUser = withContext(Dispatchers.IO) {
         userFromJson(request("GET", "/mobile/me", token = token).getJSONObject("user"))
     }

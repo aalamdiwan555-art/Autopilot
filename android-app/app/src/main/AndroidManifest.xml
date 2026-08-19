@@ -22,6 +22,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".MainActivity" android:exported="false" />
+        <activity android:name="com.mamabhutnika.rideaccepter.LoginActivity" android:exported="false" />
+        <activity android:name="com.mamabhutnika.rideaccepter.SignupActivity" android:exported="false" />
+        <activity android:name="com.mamabhutnika.rideaccepter.ForgotPasswordActivity" android:exported="false" />
         <service
             android:name=".RideAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"

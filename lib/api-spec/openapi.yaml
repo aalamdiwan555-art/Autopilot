@@ -69,6 +69,26 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /mobile/auth/forgot-password:
+    post:
+      operationId: mobileForgotPassword
+      tags: [mobile]
+      summary: Request a password reset email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MobileForgotPasswordInput"
+      responses:
+        "200":
+          description: Reset request accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
   /mobile/me:
     get:
       operationId: mobileMe
@@ -253,6 +273,13 @@ components:
           type: string
           minLength: 6
       required: [email, password]
+    MobileForgotPasswordInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required: [email]
     ReferralInput:
       type: object
       properties:
