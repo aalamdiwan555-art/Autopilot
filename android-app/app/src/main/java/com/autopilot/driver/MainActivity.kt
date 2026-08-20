@@ -80,7 +80,10 @@ class MainActivity : AppCompatActivity() {
             text = "START AUTOPILOT"
             isAllCaps = false
             textSize = 16f
-            setTextColor(Color.WHITE)
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            setTextColor(c(R.color.ink_950))
+            background = ContextCompat.getDrawable(this@MainActivity, R.drawable.bg_button_primary)
+            stateListAnimator = null
             setOnClickListener { toggleAutopilot() }
         }
         statusCard.addView(startButton, LinearLayout.LayoutParams(-1, dp(58)).apply {
@@ -109,7 +112,10 @@ class MainActivity : AppCompatActivity() {
         rewardButton = Button(this).apply {
             text = "Watch a rewarded ad"
             isAllCaps = false
-            setTextColor(Color.WHITE)
+            textSize = 14f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            background = ContextCompat.getDrawable(this@MainActivity, R.drawable.bg_button_secondary)
+            setTextColor(c(R.color.autopilot_text))
             setOnClickListener { watchRewardedAd() }
         }
         rewardsCard.addView(rewardButton, LinearLayout.LayoutParams(-1, dp(50)).apply { setMargins(0, dp(10), 0, 0) })
@@ -145,6 +151,8 @@ class MainActivity : AppCompatActivity() {
         orientation = LinearLayout.VERTICAL
         gravity = Gravity.CENTER
         isClickable = true
+        background = ContextCompat.getDrawable(this@MainActivity, R.drawable.bg_nav_item)
+        contentDescription = "$text section"
         setOnClickListener { action() }
         addView(ImageView(this@MainActivity).apply {
             setImageResource(R.drawable.ic_launcher_foreground)
@@ -157,11 +165,18 @@ class MainActivity : AppCompatActivity() {
     private fun permissionRow(parent: LinearLayout, label: String, action: () -> Unit, check: () -> Boolean) {
         val row = LinearLayout(this).apply {
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(0, dp(5), 0, dp(5))
+            setPadding(dp(12), dp(4), dp(8), dp(4))
+            isClickable = true
+            background = ContextCompat.getDrawable(this@MainActivity, R.drawable.bg_permission)
         }
         row.addView(label(label, 14, R.color.autopilot_text), LinearLayout.LayoutParams(0, dp(42), 1f))
-        val status = label(if (check()) "✓" else "Review", 13, if (check()) R.color.autopilot_success else R.color.autopilot_primary)
-        status.setOnClickListener { if (!check()) action() }
+        val status = label(if (check()) "READY" else "REVIEW", 11, if (check()) R.color.autopilot_success else R.color.autopilot_primary).apply {
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            letterSpacing = .08f
+            gravity = Gravity.CENTER
+            setPadding(dp(8), 0, dp(8), 0)
+        }
+        row.setOnClickListener { if (!check()) action() }
         permissionStatus[label] = status
         row.addView(status)
         parent.addView(row)
@@ -179,7 +194,11 @@ class MainActivity : AppCompatActivity() {
             else -> "Your permissions are ready. Start when you are ready to drive."
         }
         startButton.text = if (running) "PAUSE AUTOPILOT" else "START AUTOPILOT"
-        startButton.setBackgroundColor(c(if (running) R.color.autopilot_muted else R.color.autopilot_primary))
+        startButton.background = ContextCompat.getDrawable(
+            this,
+            if (running) R.drawable.bg_button_secondary else R.drawable.bg_button_primary,
+        )
+        startButton.setTextColor(c(if (running) R.color.autopilot_text else R.color.ink_950))
         updatePermission("Accessibility", accessibility)
         updatePermission("Floating control", overlayAllowed())
         updatePermission("Screen capture", capture)
@@ -253,7 +272,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun updatePermission(name: String, granted: Boolean) {
         permissionStatus[name]?.apply {
-            text = if (granted) "✓" else "Review"
+            text = if (granted) "READY" else "REVIEW"
             setTextColor(c(if (granted) R.color.autopilot_success else R.color.autopilot_primary))
         }
     }
@@ -276,11 +295,15 @@ class MainActivity : AppCompatActivity() {
     private fun card() = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(16), dp(14), dp(16), dp(12))
-        setBackgroundColor(c(R.color.autopilot_card))
+        background = ContextCompat.getDrawable(this@MainActivity, R.drawable.bg_card)
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, dp(14)) }
     }
     private fun label(value: String, size: Int, color: Int) = TextView(this).apply {
-        text = value; textSize = size.toFloat(); setTextColor(c(color)); setPadding(0, dp(4), 0, dp(4))
+        text = value
+        textSize = size.toFloat()
+        setTextColor(c(color))
+        setPadding(0, dp(4), 0, dp(4))
+        includeFontPadding = false
     }
     private fun title(value: String, size: Int) = label(value, size, R.color.autopilot_text).apply {
         typeface = android.graphics.Typeface.DEFAULT_BOLD

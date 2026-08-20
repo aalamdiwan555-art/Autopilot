@@ -143,8 +143,9 @@ class OnboardingActivity : AppCompatActivity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(14), dp(12), dp(10), dp(12))
-            setBackgroundColor(color(R.color.autopilot_card))
+            background = ContextCompat.getDrawable(this@OnboardingActivity, R.drawable.bg_permission)
             isClickable = true
+            contentDescription = "$title setup"
             setOnClickListener { action() }
         }
         val image = ImageView(this).apply {
@@ -184,7 +185,8 @@ class OnboardingActivity : AppCompatActivity() {
             .filter { it.third }
             .all { runCatching { it.second() }.getOrDefault(false) }
         continueButton.alpha = if (continueButton.isEnabled) 1f else .45f
-        continueButton.setBackgroundColor(color(R.color.autopilot_primary))
+        continueButton.background = ContextCompat.getDrawable(this, R.drawable.bg_button_primary)
+        continueButton.setTextColor(color(R.color.ink_950))
     }
 
     private fun openAccessibility() = startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))

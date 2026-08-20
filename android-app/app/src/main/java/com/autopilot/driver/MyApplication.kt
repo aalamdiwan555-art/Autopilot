@@ -8,7 +8,9 @@ class MyApplication : Application() {
         super.onCreate()
         StartAppSDK.init(this, BuildConfig.STARTIO_APP_ID, true)
         StartAppSDK.setUserConsent(this, "pas", System.currentTimeMillis(), true)
-        if (BuildConfig.STARTIO_TEST_MODE) StartAppSDK.setTestAdsEnabled(true)
+        // Production builds serve live Start.io inventory. Test mode is opt-in
+        // only for local QA via -PSTARTIO_TEST_MODE=true.
+        StartAppSDK.setTestAdsEnabled(BuildConfig.STARTIO_TEST_MODE)
         AdManager.initialize(this)
     }
 }
