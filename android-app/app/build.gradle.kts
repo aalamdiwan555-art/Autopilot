@@ -32,7 +32,11 @@ android {
         buildConfigField(
             "Boolean",
             "STARTIO_TEST_MODE",
+<<<<<<< HEAD
             providers.gradleProperty("STARTIO_TEST_MODE").orElse("true").get()
+=======
+         providers.gradleProperty("STARTIO_TEST_MODE").orElse("false").get()
+>>>>>>> feda77c (Initialize Android project and supporting documentation files)
         )
     }
 

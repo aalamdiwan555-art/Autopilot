@@ -9,38 +9,38 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="24dp"
-        android:paddingTop="38dp"
-        android:paddingEnd="24dp"
-        android:paddingBottom="28dp">
+            android:paddingStart="22dp"
+            android:paddingTop="28dp"
+            android:paddingEnd="22dp"
+            android:paddingBottom="32dp">
 
         <ImageView
             android:id="@+id/tvLogo"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
             android:src="@drawable/ic_autopilot_mark"
             android:contentDescription="Autopilot logo"
-            android:layout_marginBottom="22dp" />
+            android:layout_marginBottom="24dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="AUTOPILOT"
             android:textColor="@color/brand_mint"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:textStyle="bold"
             android:letterSpacing="0.18"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="10dp" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Your next ride,\nwithout the scramble."
             android:textColor="@color/text_primary"
-            android:textSize="32sp"
+            android:textSize="34sp"
             android:textStyle="bold"
             android:lineSpacingExtra="3dp"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="10dp" />
 
         <TextView
             android:layout_width="match_parent"
@@ -49,22 +49,34 @@
             android:textColor="@color/text_secondary"
             android:textSize="15sp"
             android:lineSpacingExtra="2dp"
-            android:layout_marginBottom="28dp" />
+            android:layout_marginBottom="24dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="@drawable/bg_card"
-            android:padding="20dp">
+            android:paddingStart="18dp"
+            android:paddingTop="20dp"
+            android:paddingEnd="18dp"
+            android:paddingBottom="18dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                 android:text="Welcome back, driver"
+                 android:text="Welcome back"
                 android:textColor="@color/text_primary"
-                android:textSize="19sp"
+                 android:textSize="20sp"
                 android:textStyle="bold"
+                 android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sign in to open your ride desk."
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp"
+                android:layout_marginTop="-10dp"
                 android:layout_marginBottom="18dp" />
 
             <EditText
@@ -79,7 +91,7 @@
                 android:background="@drawable/bg_input"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
-                android:layout_marginBottom="12dp" />
+                 android:layout_marginBottom="10dp" />
 
             <EditText
                 android:id="@+id/etPassword"
@@ -93,7 +105,7 @@
                 android:background="@drawable/bg_input"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
-                android:layout_marginBottom="18dp" />
+                 android:layout_marginBottom="14dp" />
 
             <TextView
                 android:id="@+id/tvForgotPassword"
@@ -105,8 +117,8 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:layout_gravity="end"
-                android:layout_marginTop="-8dp"
-                android:layout_marginBottom="16dp" />
+                 android:layout_marginTop="-4dp"
+                 android:layout_marginBottom="18dp" />
 
             <Button
                 android:id="@+id/btnLogin"
@@ -118,7 +130,7 @@
                 android:textStyle="bold"
                 android:backgroundTint="@color/brand_mint"
                 android:textColor="@color/ink_950"
-                android:layout_marginBottom="10dp" />
+                 android:layout_marginBottom="12dp" />
 
             <Button
                 android:id="@+id/btnSignup"
@@ -140,7 +152,7 @@
             android:textColor="@color/brand_amber"
             android:textSize="13sp"
             android:gravity="center"
-            android:layout_marginTop="20dp" />
+             android:layout_marginTop="16dp" />
 
         <TextView
             android:id="@+id/tvVersion"
