@@ -2,16 +2,19 @@ package com.autopilot.driver
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.accessibilityservice.GestureDescription
 import android.graphics.Path
 import android.graphics.Rect
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 
 class RideAccessibilityService : AccessibilityService() {
     companion object {
+        private const val TAG = "RideAccessibility"
         private var instance: RideAccessibilityService? = null
         private const val CLICK_COOLDOWN_MS = 900L
         @Volatile var foregroundPackage: String = ""
@@ -31,6 +34,7 @@ class RideAccessibilityService : AccessibilityService() {
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private var lastClickAt = 0L
+    private var gestureInFlight = false
 
     override fun onServiceConnected() {
         instance = this
@@ -56,32 +60,81 @@ class RideAccessibilityService : AccessibilityService() {
     }
 
     private fun clickAt(bounds: Rect): Boolean {
-        if (System.currentTimeMillis() - lastClickAt < CLICK_COOLDOWN_MS) return false
-        if (foregroundPackage !in ridePackages || bounds.isEmpty) return false
+        val now = System.currentTimeMillis()
+        if (now - lastClickAt < CLICK_COOLDOWN_MS || gestureInFlight) {
+            Log.d(TAG, "Gesture skipped: cooldown or another gesture is active")
+            return false
+        }
+        if (foregroundPackage !in ridePackages) {
+            Log.d(TAG, "Gesture skipped: unsupported foreground package=$foregroundPackage")
+            return false
+        }
+        if (bounds.isEmpty) {
+            Log.d(TAG, "Gesture skipped: empty bounds=$bounds")
+            return false
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+            Log.d(TAG, "Gesture unavailable before API 24; using node fallback")
+            return false
+        }
+
         val path = Path().apply { moveTo(bounds.exactCenterX(), bounds.exactCenterY()) }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
-            dispatchGesture(
-                android.accessibilityservice.GestureDescription.Builder()
-                    .addStroke(android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 80))
-                    .build(),
-                null,
-                null,
-            )
-        ) {
-            lastClickAt = System.currentTimeMillis()
+        val gesture = GestureDescription.Builder()
+            .addStroke(GestureDescription.StrokeDescription(path, 0, 80))
+            .build()
+        gestureInFlight = true
+        val accepted = dispatchGesture(
+            gesture,
+            object : GestureResultCallback() {
+                override fun onCompleted(gestureDescription: GestureDescription?) {
+                    gestureInFlight = false
+                    lastClickAt = System.currentTimeMillis()
+                    Log.i(TAG, "Screen gesture completed at (${bounds.exactCenterX()}, ${bounds.exactCenterY()})")
+                }
+
+                override fun onCancelled(gestureDescription: GestureDescription?) {
+                    gestureInFlight = false
+                    Log.w(TAG, "Screen gesture cancelled; trying accessibility-node fallback")
+                    mainHandler.post { clickAccept() }
+                }
+            },
+            mainHandler,
+        )
+        if (accepted) {
+            Log.d(TAG, "Screen gesture accepted for dispatch at $bounds")
             return true
         }
+        gestureInFlight = false
+        Log.w(TAG, "Screen gesture rejected by AccessibilityService")
         return false
     }
 
-    private fun clickAccept() {
-        if (System.currentTimeMillis() - lastClickAt < CLICK_COOLDOWN_MS) return
-        if (foregroundPackage !in ridePackages) return
-        val root = rootInActiveWindow ?: return
+    private fun clickAccept(): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - lastClickAt < CLICK_COOLDOWN_MS || gestureInFlight) {
+            Log.d(TAG, "Node click skipped: cooldown or gesture is active")
+            return false
+        }
+        if (foregroundPackage !in ridePackages) {
+            Log.d(TAG, "Node click skipped: unsupported foreground package=$foregroundPackage")
+            return false
+        }
+        val root = rootInActiveWindow ?: run {
+            Log.w(TAG, "Node click skipped: active accessibility window is unavailable")
+            return false
+        }
         val candidate = findCandidate(root)
         if (candidate != null) {
-            if (performClick(candidate)) lastClickAt = System.currentTimeMillis()
+            val clicked = performClick(candidate)
+            if (clicked && !gestureInFlight) {
+                lastClickAt = System.currentTimeMillis()
+            }
+            Log.i(TAG, "Node click result=$clicked")
             candidate.recycle()
+            return clicked
+        } else {
+            Log.d(TAG, "Node click found no accept candidate")
+            return false
         }
     }
 
@@ -116,18 +169,39 @@ class RideAccessibilityService : AccessibilityService() {
         val bounds = Rect()
         node.getBoundsInScreen(bounds)
         if (bounds.isEmpty) return false
-        val path = Path().apply { moveTo(bounds.exactCenterX(), bounds.exactCenterY()) }
-        return dispatchGesture(
-            android.accessibilityservice.GestureDescription.Builder()
-                .addStroke(android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 80))
-                .build(), null, null
+        val path = Path().apply {
+            moveTo(bounds.exactCenterX(), bounds.exactCenterY())
+            lineTo(bounds.exactCenterX() + 1f, bounds.exactCenterY() + 1f)
+        }
+        val gesture = GestureDescription.Builder()
+            .addStroke(GestureDescription.StrokeDescription(path, 0, 80))
+            .build()
+        gestureInFlight = true
+        val accepted = dispatchGesture(
+            gesture,
+            object : GestureResultCallback() {
+                override fun onCompleted(gestureDescription: GestureDescription?) {
+                    gestureInFlight = false
+                    lastClickAt = System.currentTimeMillis()
+                    Log.i(TAG, "Node bounds gesture completed")
+                }
+
+                override fun onCancelled(gestureDescription: GestureDescription?) {
+                    gestureInFlight = false
+                    Log.w(TAG, "Node bounds gesture cancelled")
+                }
+            },
+            mainHandler,
         )
+        if (!accepted) gestureInFlight = false
+        return accepted
     }
 
     override fun onInterrupt() = Unit
     override fun onDestroy() {
         mainHandler.removeCallbacksAndMessages(null)
-        instance = null
+        gestureInFlight = false
+        if (instance === this) instance = null
         foregroundPackage = ""
         super.onDestroy()
     }

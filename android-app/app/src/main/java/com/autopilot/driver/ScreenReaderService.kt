@@ -45,6 +45,10 @@ class ScreenReaderService : Service() {
     private var projection: MediaProjection? = null
     private var display: VirtualDisplay? = null
     private var reader: ImageReader? = null
+    private var screenWidth = 0
+    private var screenHeight = 0
+    private var captureWidth = 0
+    private var captureHeight = 0
 
     override fun onCreate() {
         super.onCreate()
@@ -76,8 +80,12 @@ class ScreenReaderService : Service() {
         val metrics = DisplayMetrics()
         @Suppress("DEPRECATION")
         (getSystemService(WINDOW_SERVICE) as android.view.WindowManager).defaultDisplay.getRealMetrics(metrics)
-        val width = metrics.widthPixels.coerceAtMost(1440)
-        val height = metrics.heightPixels.coerceAtMost(2560)
+        screenWidth = metrics.widthPixels
+        screenHeight = metrics.heightPixels
+        val width = screenWidth.coerceAtMost(1440)
+        val height = screenHeight.coerceAtMost(2560)
+        captureWidth = width
+        captureHeight = height
         reader = ImageReader.newInstance(width, height, android.graphics.PixelFormat.RGBA_8888, 2)
         display = projection?.createVirtualDisplay(
             "AutopilotScreenReader", width, height, metrics.densityDpi,
@@ -112,7 +120,7 @@ class ScreenReaderService : Service() {
                         if (prefs.autopilotEnabled && OcrKeywords.containsAccept(result.text)) {
                             val targetBounds = findAcceptBounds(result)
                             if (targetBounds != null) {
-                                RideAccessibilityService.requestAcceptClick(targetBounds)
+                                RideAccessibilityService.requestAcceptClick(mapCaptureBoundsToScreen(targetBounds))
                             } else {
                                 RideAccessibilityService.requestAcceptClick()
                             }
@@ -141,6 +149,22 @@ class ScreenReaderService : Service() {
         val lines = result.textBlocks.flatMap { it.lines }
         return lines.firstOrNull { OcrKeywords.containsAccept(it.text) }?.boundingBox
             ?: result.textBlocks.firstOrNull { OcrKeywords.containsAccept(it.text) }?.boundingBox
+    }
+
+    private fun mapCaptureBoundsToScreen(bounds: Rect): Rect {
+        if (captureWidth <= 0 || captureHeight <= 0 ||
+            screenWidth <= 0 || screenHeight <= 0
+        ) {
+            return Rect(bounds)
+        }
+        val scaleX = screenWidth.toFloat() / captureWidth
+        val scaleY = screenHeight.toFloat() / captureHeight
+        return Rect(
+            (bounds.left * scaleX).toInt(),
+            (bounds.top * scaleY).toInt(),
+            (bounds.right * scaleX).toInt(),
+            (bounds.bottom * scaleY).toInt(),
+        )
     }
 
     private fun createChannel() {
