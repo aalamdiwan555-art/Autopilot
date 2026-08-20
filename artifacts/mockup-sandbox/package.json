@@ -70,5 +70,9 @@
     "vaul": "^1.1.2",
     "vite": "catalog:",
     "zod": "catalog:"
+  },
+  "overrides": {
+    "@types/react": "19.1.17",
+    "@types/react-dom": "19.1.7"
   }
 }
