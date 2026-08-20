@@ -48,12 +48,16 @@ class RideAccessibilityService : AccessibilityService() {
 
     private fun requestClick(bounds: Rect?) {
         if (!AppPrefs(this).autopilotEnabled) return
-        mainHandler.post { if (bounds != null) clickAt(bounds) else clickAccept() }
+        mainHandler.post {
+            // OCR gives the best result for canvas-rendered driver apps. If
+            // Android rejects the gesture, use the accessibility tree instead.
+            if (bounds == null || !clickAt(bounds)) clickAccept()
+        }
     }
 
-    private fun clickAt(bounds: Rect) {
-        if (System.currentTimeMillis() - lastClickAt < CLICK_COOLDOWN_MS) return
-        if (foregroundPackage !in ridePackages || bounds.isEmpty) return
+    private fun clickAt(bounds: Rect): Boolean {
+        if (System.currentTimeMillis() - lastClickAt < CLICK_COOLDOWN_MS) return false
+        if (foregroundPackage !in ridePackages || bounds.isEmpty) return false
         val path = Path().apply { moveTo(bounds.exactCenterX(), bounds.exactCenterY()) }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
             dispatchGesture(
@@ -65,7 +69,9 @@ class RideAccessibilityService : AccessibilityService() {
             )
         ) {
             lastClickAt = System.currentTimeMillis()
+            return true
         }
+        return false
     }
 
     private fun clickAccept() {
