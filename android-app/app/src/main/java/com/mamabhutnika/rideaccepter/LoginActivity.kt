@@ -130,7 +130,7 @@ open class LoginActivity : AppCompatActivity() {
         } else if (isAdmin) {
             AdminActivity::class.java
         } else {
-            MainActivity::class.java
+            com.autopilot.driver.MainActivity::class.java
         }
         startActivity(Intent(this, destination).apply {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)

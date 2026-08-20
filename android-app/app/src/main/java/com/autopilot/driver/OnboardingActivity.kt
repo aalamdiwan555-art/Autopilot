@@ -24,7 +24,7 @@ import androidx.core.content.ContextCompat
 class OnboardingActivity : AppCompatActivity() {
     private lateinit var prefs: AppPrefs
     private lateinit var continueButton: Button
-    private val rows = mutableListOf<Pair<TextView, () -> Boolean>>()
+    private val rows = mutableListOf<Triple<TextView, () -> Boolean, Boolean>>()
 
     private val captureLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -101,12 +101,12 @@ class OnboardingActivity : AppCompatActivity() {
             { openAccessibility() }, { RideAccessibilityService.isEnabled(this) })
         permissionRow(column, "Floating Control", "To show the floating button above ride apps", android.R.drawable.ic_menu_view,
             { openOverlay() }, { Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(this) })
-        permissionRow(column, "Screen Capture", "To read ride details using on-device OCR", android.R.drawable.ic_menu_camera,
-            { requestCapture() }, { prefs.captureGranted })
+        permissionRow(column, "Screen Capture", "Requested when you start Autopilot", android.R.drawable.ic_menu_camera,
+            { requestCapture() }, { prefs.captureGranted }, required = false)
         permissionRow(column, "Notification Access", "To detect new ride notifications", android.R.drawable.ic_dialog_info,
             { requestNotifications() }, { notificationGranted() })
         permissionRow(column, "Internet", "For ads and subscription", android.R.drawable.ic_menu_upload,
-            { }, { true })
+            { }, { true }, required = false)
 
         continueButton = Button(this).apply {
             text = "Continue to App"
@@ -136,7 +136,8 @@ class OnboardingActivity : AppCompatActivity() {
         description: String,
         icon: Int,
         action: () -> Unit,
-        check: () -> Boolean
+        check: () -> Boolean,
+        required: Boolean = true
     ) {
         val card = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -169,17 +170,19 @@ class OnboardingActivity : AppCompatActivity() {
         card.addView(copy, LinearLayout.LayoutParams(0, -2, 1f))
         val status = TextView(this).apply { textSize = 22f; gravity = Gravity.CENTER }
         card.addView(status, LinearLayout.LayoutParams(dp(32), dp(40)))
-        rows += status to check
+        rows += Triple(status, check, required)
         parent.addView(card, LinearLayout.LayoutParams(-1, dp(78)).apply { setMargins(0, 0, 0, dp(10)) })
     }
 
     private fun refresh() {
-        rows.forEach { (status, check) ->
+        rows.forEach { (status, check, _) ->
             val granted = runCatching { check() }.getOrDefault(false)
             status.text = if (granted) "✓" else "›"
             status.setTextColor(color(if (granted) R.color.autopilot_success else R.color.autopilot_muted))
         }
-        continueButton.isEnabled = rows.all { runCatching { it.second() }.getOrDefault(false) }
+        continueButton.isEnabled = rows
+            .filter { it.third }
+            .all { runCatching { it.second() }.getOrDefault(false) }
         continueButton.alpha = if (continueButton.isEnabled) 1f else .45f
         continueButton.setBackgroundColor(color(R.color.autopilot_primary))
     }

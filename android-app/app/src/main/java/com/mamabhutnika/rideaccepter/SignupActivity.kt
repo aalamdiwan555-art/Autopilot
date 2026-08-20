@@ -84,7 +84,7 @@ open class SignupActivity : AppCompatActivity() {
                      } else if (result.user.isAdmin) {
                          AdminActivity::class.java
                      } else {
-                         MainActivity::class.java
+                         com.autopilot.driver.MainActivity::class.java
                      }
                      startActivity(Intent(this@SignupActivity, destination))
                     finish()
