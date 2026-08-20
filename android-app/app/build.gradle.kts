@@ -28,6 +28,9 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    buildFeatures {
+        buildConfig = true
+    }
 }
 
 dependencies {
@@ -36,4 +39,10 @@ dependencies {
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.activity:activity-ktx:1.8.2")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    
+    // 1. StartApp Ads
+    implementation("com.startapp:inapp-sdk:4.10.4")
+    
+    // 2. EncryptedSharedPreferences ke liye
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 }
