@@ -13,8 +13,9 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope // <-- IMPORTANT: yehi sahi import hai
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 open class LoginActivity : AppCompatActivity() {
 
@@ -28,6 +29,12 @@ open class LoginActivity : AppCompatActivity() {
     private lateinit var tvForgotPassword: TextView
     private lateinit var prefs: UserPrefs
     private val api = ApiClient()
+    private var sessionCheckStarted = false
+    private var navigationStarted = false
+
+    companion object {
+        private const val SESSION_CHECK_TIMEOUT_MS = 13_000L
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,16 +93,25 @@ open class LoginActivity : AppCompatActivity() {
     }
 
     private fun validateExistingSession() {
-        if (!prefs.isLoggedIn || prefs.apiToken.isBlank()) return
+        if (sessionCheckStarted || !prefs.isLoggedIn || prefs.apiToken.isBlank()) return
+        sessionCheckStarted = true
         setBusy(true, "Checking your saved session…")
         lifecycleScope.launch {
             try {
-                val user = api.me(prefs.apiToken)
-                prefs.applyRemoteUser(user)
-                openHome(user.isAdmin)
-            } catch (_: Exception) {
+                val result = withTimeoutOrNull(SESSION_CHECK_TIMEOUT_MS) {
+                    runCatching { api.me(prefs.apiToken) }
+                }
+                val user = result?.getOrNull()
+                if (user != null) {
+                    prefs.applyRemoteUser(user)
+                    openHome(user.isAdmin)
+                } else {
+                    prefs.clearSession()
+                    setBusy(false, "Your session expired. Please sign in again.")
+                }
+            } catch (error: Exception) {
                 prefs.clearSession()
-                setBusy(false, "Your session expired. Please sign in again.")
+                setBusy(false, error.message ?: "Your session expired. Please sign in again.")
             }
         }
     }
@@ -107,6 +123,8 @@ open class LoginActivity : AppCompatActivity() {
     }
 
     private fun openHome(isAdmin: Boolean) {
+        if (navigationStarted || isFinishing || (android.os.Build.VERSION.SDK_INT >= 17 && isDestroyed)) return
+        navigationStarted = true
         val destination = if (!com.autopilot.driver.AppPrefs(this).onboarded) {
             com.autopilot.driver.OnboardingActivity::class.java
         } else if (isAdmin) {
@@ -114,7 +132,9 @@ open class LoginActivity : AppCompatActivity() {
         } else {
             MainActivity::class.java
         }
-        startActivity(Intent(this, destination))
+        startActivity(Intent(this, destination).apply {
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        })
         finish()
     }
 
