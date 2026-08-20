@@ -1,0 +1,2 @@
+- [Supabase server-key compatibility](supabase-key-compatibility.md) — validate the active server key against Auth admin before relying on account mutations.
+- [Android build environment](android-build-environment.md) — native APK builds require an Android SDK and sdk.dir/ANDROID_HOME in this workspace.
