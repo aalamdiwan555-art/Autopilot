@@ -17,7 +17,7 @@ android {
         versionName = "1.0"
         val apiBaseUrl = providers.gradleProperty("API_BASE_URL").orElse("https://api.invalid").get()
         val startIoAppId = providers.gradleProperty("STARTIO_APP_ID").orElse("207133232").get()
-        val startIoTestMode = providers.gradleProperty("STARTIO_TEST_MODE").orElse("true").get().toBoolean()
+        val startIoTestMode = providers.gradleProperty("STARTIO_TEST_MODE").orElse("false").get().toBoolean()
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         buildConfigField("String", "STARTIO_APP_ID", "\"$startIoAppId\"")
         buildConfigField("boolean", "STARTIO_TEST_MODE", startIoTestMode.toString())

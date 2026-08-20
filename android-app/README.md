@@ -5,9 +5,8 @@ Native Kotlin implementation targeting Android SDK 34.
 ## Build
 
 The build uses Start.io application ID `207133232` by default. You can override
-it with `STARTIO_APP_ID` or `-PSTARTIO_APP_ID=...`. Test ads are enabled by
-default; use `-PSTARTIO_TEST_MODE=false` for a release build after the Start.io
-account is approved.
+it with `STARTIO_APP_ID` or `-PSTARTIO_APP_ID=...`. Live ads are enabled by
+default in all builds; use `-PSTARTIO_TEST_MODE=true` for local QA.
 
 ```bash
 ./gradlew :app:assembleDebug
