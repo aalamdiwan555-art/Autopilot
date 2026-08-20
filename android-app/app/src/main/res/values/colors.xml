@@ -1,0 +1,27 @@
+<resources>
+    <!-- Tumhare existing colors -->
+    <color name="autopilot_background">#071019</color>
+    <color name="autopilot_card">#101D2A</color>
+    <color name="autopilot_primary">#63E6A4</color>
+    <color name="autopilot_text">#F5FAF8</color>
+    <color name="autopilot_muted">#9CB2B5</color>
+    <color name="autopilot_success">#63E6A4</color>
+    <color name="autopilot_border">#25404A</color>
+    <color name="autopilot_surface_raised">#162735</color>
+    <color name="autopilot_warning">#F5B95D</color>
+
+    <!-- Layout aliases -->
+    <color name="text_primary">#F5FAF8</color>
+    <color name="text_secondary">#9CB2B5</color>
+    <color name="text_muted">#759095</color>
+    <color name="brand_mint">#63E6A4</color>
+    <color name="brand_blue">#2D7DFF</color>
+    <color name="brand_amber">#F5B95D</color>
+    <color name="ink_950">#071019</color>
+    <color name="ink_700">#162735</color>
+
+    <!-- Naye missing colors -->
+    <color name="danger">#EF4444</color>      <!-- Red for error button -->
+    <color name="black">#000</color>       <!-- For launcher icon -->
+    <color name="white">#FFFFFF</color>
+</resources>

@@ -1,0 +1,11 @@
+<resources>
+    <style name="Theme.Autopilot" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">@color/autopilot_primary</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:navigationBarColor">@color/autopilot_background</item>
+        <item name="android:statusBarColor">@color/autopilot_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

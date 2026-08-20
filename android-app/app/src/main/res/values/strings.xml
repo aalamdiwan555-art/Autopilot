@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Autopilot</string>
+    <string name="accessibility_service_label">Autopilot ride automation</string>
+    <string name="accessibility_service_description">Reads ride offer controls in Rapido, Ola, and Uber to assist with accepting rides.</string>
+</resources>
