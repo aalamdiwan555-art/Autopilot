@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { AdControls } from '@/components/AdExperience';
 
 const rows = [
   { icon: 'help-circle' as const, title: 'Help centre', detail: 'Answers for setup and shifts', url: 'mailto:support@autopilot.app' },
@@ -71,6 +72,9 @@ export default function ProfileScreen() {
           <Switch testID="haptic-toggle" accessibilityLabel="Haptic feedback" value={haptics} onValueChange={changeHaptics} trackColor={{ false: colors.muted, true: colors.primary }} thumbColor={haptics ? colors.primaryForeground : colors.mutedForeground} />
         </View>
       </View>
+
+      <Text style={styles.sectionTitle}>Offers</Text>
+      <AdControls />
 
       <Text style={styles.sectionTitle}>Support & legal</Text>
       <View style={styles.card}>
