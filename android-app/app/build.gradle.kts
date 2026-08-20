@@ -4,7 +4,9 @@ plugins {
 }
 
 android {
-    namespace = "com.mamabhutnika.rideaccepter"
+    // Keep the namespace aligned with the primary Kotlin source package.
+    // The installable Android application ID remains com.autopilot.app.
+    namespace = "com.autopilot.driver"
     compileSdk = 34
 
     defaultConfig {
@@ -13,6 +15,8 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        val apiBaseUrl = providers.gradleProperty("API_BASE_URL").orElse("https://api.invalid").get()
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
     }
 
     buildTypes {
@@ -45,4 +49,5 @@ dependencies {
     
     // 2. EncryptedSharedPreferences ke liye
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation("com.google.mlkit:text-recognition:16.0.1")
 }

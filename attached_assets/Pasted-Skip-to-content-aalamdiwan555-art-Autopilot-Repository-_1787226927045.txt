@@ -1,0 +1,135 @@
+Skip to content
+aalamdiwan555-art
+Autopilot
+Repository navigation
+Code
+Issues
+Pull requests
+Agents
+Actions
+Projects
+Security and quality
+Insights
+Settings
+Build Android APK
+Document safe GitHub import workflow #67
+All jobs
+Run details
+build
+failed now in 3m 52s
+Search logs
+2s
+1s
+1s
+10s
+4s
+11s
+1m 4s
+21s
+1m 52s
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/OnboardingActivity.kt:97:32 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/OnboardingActivity.kt:126:32 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/OnboardingActivity.kt:146:77 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/OnboardingActivity.kt:153:34 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/OnboardingActivity.kt:163:32 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/OnboardingActivity.kt:168:32 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/OnboardingActivity.kt:182:52 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/OnboardingActivity.kt:182:83 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/OnboardingActivity.kt:188:69 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/OnboardingActivity.kt:189:43 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/ScreenReaderService.kt:22:19 Unresolved reference 'mlkit'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/ScreenReaderService.kt:23:19 Unresolved reference 'mlkit'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/ScreenReaderService.kt:24:19 Unresolved reference 'mlkit'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/ScreenReaderService.kt:41:30 Unresolved reference 'TextRecognition'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/ScreenReaderService.kt:41:56 Unresolved reference 'TextRecognizerOptions'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/ScreenReaderService.kt:108:36 Unresolved reference 'InputImage'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/ScreenReaderService.kt:109:45 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/ScreenReaderService.kt:110:89 Unresolved reference 'text'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/SignupActivity.kt:12:29 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/SignupActivity.kt:30:24 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/SignupActivity.kt:32:29 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/SignupActivity.kt:33:30 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/SignupActivity.kt:34:33 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/SignupActivity.kt:35:33 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/SignupActivity.kt:36:31 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/SignupActivity.kt:37:30 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/autopilot/driver/SignupActivity.kt:38:34 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/mamabhutnika/rideaccepter/AdminActivity.kt:3:29 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/mamabhutnika/rideaccepter/AdminActivity.kt:4:29 Unresolved reference 'BuildConfig'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/mamabhutnika/rideaccepter/ApiClient.kt:3:29 Unresolved reference 'BuildConfig'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/mamabhutnika/rideaccepter/ApiClient.kt:67:47 Unresolved reference 'API_BASE_URL'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/mamabhutnika/rideaccepter/FloatingWindowService.kt:3:29 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/mamabhutnika/rideaccepter/FloatingWindowService.kt:4:29 Unresolved reference 'BuildConfig'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/mamabhutnika/rideaccepter/ForgotPasswordActivity.kt:12:29 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/mamabhutnika/rideaccepter/SignupActivity.kt:3:29 Unresolved reference 'R'.
+e: file:///home/runner/work/Autopilot/Autopilot/android-app/app/src/main/java/com/mamabhutnika/rideaccepter/SignupActivity.kt:4:29 Unresolved reference 'BuildConfig'.
+> Task :app:mergeExtDexDebug
+FAILURE: Build failed with an exception.
+* What went wrong:
+23 actionable tasks: 23 executed
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+* Try:
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+* Exception is:
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:compileDebugKotlin'.
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:130)
+	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:282)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:128)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:116)
+	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:200)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:195)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:331)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:318)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:314)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:80)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:314)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:463)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:380)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionException: A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+	at org.gradle.workers.internal.DefaultWorkerExecutor$WorkItemExecution.waitForCompletion(DefaultWorkerExecutor.java:287)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.lambda$waitForItemsAndGatherFailures$2(DefaultAsyncWorkTracker.java:130)
+	at org.gradle.internal.Factories$1.create(Factories.java:31)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocks(DefaultWorkerLeaseService.java:336)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocks(DefaultWorkerLeaseService.java:319)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLock(DefaultWorkerLeaseService.java:324)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForItemsAndGatherFailures(DefaultAsyncWorkTracker.java:126)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForItemsAndGatherFailures(DefaultAsyncWorkTracker.java:92)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForAll(DefaultAsyncWorkTracker.java:78)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForCompletion(DefaultAsyncWorkTracker.java:66)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:252)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:29)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:26)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:47)
+0s
+0s
+0s
+1s
+0s
+0s
