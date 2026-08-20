@@ -8,26 +8,38 @@ import android.graphics.Rect
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import kotlin.math.roundToInt
 
 class RideAccessibilityService : AccessibilityService() {
+
     companion object {
         private const val TAG = "RideAccessibility"
         private var instance: RideAccessibilityService? = null
-        private const val CLICK_COOLDOWN_MS = 900L
+        private const val CLICK_COOLDOWN_MS = 500L   // slightly faster but still safe
+        private const val STROKE_MS = 100L           // 100 ms is more reliable than 80 ms
         @Volatile var foregroundPackage: String = ""
+
         private val ridePackages = setOf(
             "com.rapido.rider", "com.olacabs.oladriver", "com.ubercab.driver",
             "com.ubercab", "com.ubercab.eats"
         )
+
         fun isEnabled(context: android.content.Context): Boolean =
             (context.getSystemService(ACCESSIBILITY_SERVICE) as? android.view.accessibility.AccessibilityManager)
                 ?.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
                 ?.any { it.resolveInfo.serviceInfo.packageName == context.packageName } == true
-        fun requestAcceptClick() { instance?.requestClick(null) }
+
+        fun requestAcceptClick() {
+            if (instance == null) Log.w(TAG, "requestAcceptClick() dropped: service not connected")
+            instance?.requestClick(null)
+        }
+
         fun requestAcceptClick(bounds: Rect) {
+            if (instance == null) Log.w(TAG, "requestAcceptClick(bounds) dropped: service not connected")
             instance?.requestClick(Rect(bounds))
         }
     }
@@ -35,9 +47,17 @@ class RideAccessibilityService : AccessibilityService() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var lastClickAt = 0L
     private var gestureInFlight = false
+    private var screenWidth = 0
+    private var screenHeight = 0
 
     override fun onServiceConnected() {
         instance = this
+        val metrics = DisplayMetrics()
+        @Suppress("DEPRECATION")
+        (getSystemService(WINDOW_SERVICE) as android.view.WindowManager).defaultDisplay.getRealMetrics(metrics)
+        screenWidth = metrics.widthPixels
+        screenHeight = metrics.heightPixels
+
         serviceInfo = serviceInfo.apply {
             eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
@@ -78,10 +98,24 @@ class RideAccessibilityService : AccessibilityService() {
             return false
         }
 
-        val path = Path().apply { moveTo(bounds.exactCenterX(), bounds.exactCenterY()) }
+        // ---- CRITICAL FIX: add a 1-pixel line so the path has a real stroke ----
+        val centerX = bounds.exactCenterX()
+        val centerY = bounds.exactCenterY()
+        val path = Path().apply {
+            moveTo(centerX, centerY)
+            lineTo(centerX + 1f, centerY + 1f)
+        }
+
+        // Sanity-check the target is actually on screen
+        if (centerX < 0 || centerY < 0 || centerX > screenWidth || centerY > screenHeight) {
+            Log.w(TAG, "Gesture skipped: center ($centerX, $centerY) outside screen ${screenWidth}x$screenHeight")
+            return false
+        }
+
         val gesture = GestureDescription.Builder()
-            .addStroke(GestureDescription.StrokeDescription(path, 0, 80))
+            .addStroke(GestureDescription.StrokeDescription(path, 0, STROKE_MS))
             .build()
+
         gestureInFlight = true
         val accepted = dispatchGesture(
             gesture,
@@ -89,7 +123,7 @@ class RideAccessibilityService : AccessibilityService() {
                 override fun onCompleted(gestureDescription: GestureDescription?) {
                     gestureInFlight = false
                     lastClickAt = System.currentTimeMillis()
-                    Log.i(TAG, "Screen gesture completed at (${bounds.exactCenterX()}, ${bounds.exactCenterY()})")
+                    Log.i(TAG, "Screen gesture completed at ($centerX, $centerY)")
                 }
 
                 override fun onCancelled(gestureDescription: GestureDescription?) {
@@ -154,9 +188,9 @@ class RideAccessibilityService : AccessibilityService() {
 
     private fun performClick(node: AccessibilityNodeInfo): Boolean {
         if (node.performAction(AccessibilityNodeInfo.ACTION_CLICK)) return true
+
         var parent = node.parent
-        repeat(4) {
-            if (parent == null) return@repeat
+        while (parent != null) {
             if (parent.isClickable && parent.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
                 parent.recycle()
                 return true
@@ -165,17 +199,23 @@ class RideAccessibilityService : AccessibilityService() {
             parent.recycle()
             parent = next
         }
+
+        // Final fallback: tap the center of the node's screen bounds
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return false
         val bounds = Rect()
         node.getBoundsInScreen(bounds)
         if (bounds.isEmpty) return false
+
+        val cx = bounds.exactCenterX()
+        val cy = bounds.exactCenterY()
         val path = Path().apply {
-            moveTo(bounds.exactCenterX(), bounds.exactCenterY())
-            lineTo(bounds.exactCenterX() + 1f, bounds.exactCenterY() + 1f)
+            moveTo(cx, cy)
+            lineTo(cx + 1f, cy + 1f)
         }
         val gesture = GestureDescription.Builder()
-            .addStroke(GestureDescription.StrokeDescription(path, 0, 80))
+            .addStroke(GestureDescription.StrokeDescription(path, 0, STROKE_MS))
             .build()
+
         gestureInFlight = true
         val accepted = dispatchGesture(
             gesture,
@@ -185,7 +225,6 @@ class RideAccessibilityService : AccessibilityService() {
                     lastClickAt = System.currentTimeMillis()
                     Log.i(TAG, "Node bounds gesture completed")
                 }
-
                 override fun onCancelled(gestureDescription: GestureDescription?) {
                     gestureInFlight = false
                     Log.w(TAG, "Node bounds gesture cancelled")
@@ -198,6 +237,7 @@ class RideAccessibilityService : AccessibilityService() {
     }
 
     override fun onInterrupt() = Unit
+
     override fun onDestroy() {
         mainHandler.removeCallbacksAndMessages(null)
         gestureInFlight = false
