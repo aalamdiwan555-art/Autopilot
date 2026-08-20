@@ -142,12 +142,12 @@ class MainActivity : AppCompatActivity() {
     private fun buildNavigation() = LinearLayout(this).apply {
         gravity = Gravity.CENTER
         setPadding(0, dp(2), 0, dp(8))
-        addView(navItem("Home") { scroll.fullScroll(View.FOCUS_UP) }, LinearLayout.LayoutParams(0, -1, 1f))
-        addView(navItem("Rewards") { scroll.smoothScrollTo(0, rewardsCard.top) }, LinearLayout.LayoutParams(0, -1, 1f))
-        addView(navItem("Settings") { scroll.smoothScrollTo(0, permissionsCard.top) }, LinearLayout.LayoutParams(0, -1, 1f))
+        addView(navItem("Home", android.R.drawable.ic_menu_view) { scroll.fullScroll(View.FOCUS_UP) }, LinearLayout.LayoutParams(0, -1, 1f))
+        addView(navItem("Rewards", android.R.drawable.ic_menu_agenda) { scroll.smoothScrollTo(0, rewardsCard.top) }, LinearLayout.LayoutParams(0, -1, 1f))
+        addView(navItem("Settings", android.R.drawable.ic_menu_preferences) { scroll.smoothScrollTo(0, permissionsCard.top) }, LinearLayout.LayoutParams(0, -1, 1f))
     }
 
-    private fun navItem(text: String, action: () -> Unit) = LinearLayout(this).apply {
+    private fun navItem(text: String, icon: Int, action: () -> Unit) = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         gravity = Gravity.CENTER
         isClickable = true
@@ -155,7 +155,7 @@ class MainActivity : AppCompatActivity() {
         contentDescription = "$text section"
         setOnClickListener { action() }
         addView(ImageView(this@MainActivity).apply {
-            setImageResource(R.drawable.ic_launcher_foreground)
+            setImageResource(icon)
             setColorFilter(c(R.color.autopilot_primary))
             contentDescription = "$text logo"
         }, LinearLayout.LayoutParams(dp(24), dp(24)))

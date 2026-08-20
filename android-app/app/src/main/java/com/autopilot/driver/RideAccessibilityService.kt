@@ -23,7 +23,10 @@ class RideAccessibilityService : AccessibilityService() {
             (context.getSystemService(ACCESSIBILITY_SERVICE) as? android.view.accessibility.AccessibilityManager)
                 ?.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
                 ?.any { it.resolveInfo.serviceInfo.packageName == context.packageName } == true
-        fun requestAcceptClick() { instance?.requestClick() }
+        fun requestAcceptClick() { instance?.requestClick(null) }
+        fun requestAcceptClick(bounds: Rect) {
+            instance?.requestClick(Rect(bounds))
+        }
     }
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -43,9 +46,26 @@ class RideAccessibilityService : AccessibilityService() {
         foregroundPackage = event?.packageName?.toString().orEmpty()
     }
 
-    private fun requestClick() {
+    private fun requestClick(bounds: Rect?) {
         if (!AppPrefs(this).autopilotEnabled) return
-        mainHandler.post { clickAccept() }
+        mainHandler.post { if (bounds != null) clickAt(bounds) else clickAccept() }
+    }
+
+    private fun clickAt(bounds: Rect) {
+        if (System.currentTimeMillis() - lastClickAt < CLICK_COOLDOWN_MS) return
+        if (foregroundPackage !in ridePackages || bounds.isEmpty) return
+        val path = Path().apply { moveTo(bounds.exactCenterX(), bounds.exactCenterY()) }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+            dispatchGesture(
+                android.accessibilityservice.GestureDescription.Builder()
+                    .addStroke(android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 80))
+                    .build(),
+                null,
+                null,
+            )
+        ) {
+            lastClickAt = System.currentTimeMillis()
+        }
     }
 
     private fun clickAccept() {

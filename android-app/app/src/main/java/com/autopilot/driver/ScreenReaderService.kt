@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
+import android.graphics.Rect
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
 import android.media.ImageReader
@@ -21,6 +22,7 @@ import android.util.DisplayMetrics
 import androidx.core.app.NotificationCompat
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import java.nio.ByteBuffer
 import java.util.concurrent.Executors
@@ -108,7 +110,12 @@ class ScreenReaderService : Service() {
                 recognizer.process(InputImage.fromBitmap(bitmap, 0))
                     .addOnSuccessListener { result ->
                         if (prefs.autopilotEnabled && OcrKeywords.containsAccept(result.text)) {
-                            RideAccessibilityService.requestAcceptClick()
+                            val targetBounds = findAcceptBounds(result)
+                            if (targetBounds != null) {
+                                RideAccessibilityService.requestAcceptClick(targetBounds)
+                            } else {
+                                RideAccessibilityService.requestAcceptClick()
+                            }
                         }
                     }
                     .addOnCompleteListener {
@@ -128,6 +135,12 @@ class ScreenReaderService : Service() {
         val bitmap = Bitmap.createBitmap(image.width, image.height, Bitmap.Config.ARGB_8888)
         bitmap.copyPixelsFromBuffer(buffer)
         return bitmap
+    }
+
+    private fun findAcceptBounds(result: Text): Rect? {
+        val lines = result.textBlocks.flatMap { it.lines }
+        return lines.firstOrNull { OcrKeywords.containsAccept(it.text) }?.boundingBox
+            ?: result.textBlocks.firstOrNull { OcrKeywords.containsAccept(it.text) }?.boundingBox
     }
 
     private fun createChannel() {
