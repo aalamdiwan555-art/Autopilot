@@ -20,9 +20,11 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.mamabhutnika.rideaccepter.UserPrefs
 
 class OnboardingActivity : AppCompatActivity() {
     private lateinit var prefs: AppPrefs
+    private lateinit var authPrefs: UserPrefs
     private lateinit var continueButton: Button
     private val rows = mutableListOf<Triple<TextView, () -> Boolean, Boolean>>()
 
@@ -40,6 +42,7 @@ class OnboardingActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         prefs = AppPrefs(this)
+        authPrefs = UserPrefs(this)
         if (prefs.onboarded) {
             openMain()
             return
@@ -206,7 +209,6 @@ class OnboardingActivity : AppCompatActivity() {
         Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
     private fun openMain() {
-        val authPrefs = getSharedPreferences("mama_bhutnika_prefs", MODE_PRIVATE)
         val destination = if (isLoggedIn()) {
             MainActivity::class.java
         } else {
@@ -216,9 +218,7 @@ class OnboardingActivity : AppCompatActivity() {
         finish()
     }
     private fun isLoggedIn(): Boolean {
-        val authPrefs = getSharedPreferences("mama_bhutnika_prefs", MODE_PRIVATE)
-        return authPrefs.getBoolean("is_logged_in", false) &&
-            !authPrefs.getString("api_token", "").isNullOrBlank()
+        return authPrefs.isLoggedIn && authPrefs.apiToken.isNotBlank()
     }
     private fun color(id: Int) = ContextCompat.getColor(this, id)
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
