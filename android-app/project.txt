@@ -1,0 +1,297 @@
+================================================================================
+                    AUTOPILOT - PROJECT DOCUMENTATION (A-Z)
+================================================================================
+Last Updated: 2026-08-17
+Version: 4.0
+Total Changes Made: 20
+
+================================================================================
+A. PROJECT OVERVIEW
+================================================================================
+Name:        Autopilot
+Type:        Android Accessibility Auto-Clicker App with Ad Monetization
+Purpose:     Auto-detects and clicks "Accept" buttons across all Indian
+             languages in ride-hailing apps (Rapido, Ola, Uber)
+Package:     com.autopilot.app
+Min SDK:     24 (Android 7.0)
+Target SDK:  34 (Android 14)
+Compile SDK: 34
+Version:     4.0 (versionCode 4)
+Size:        ~6 MB APK
+Ad SDK:      Start.io (StartApp) v5.+ | App ID: 207133232
+
+================================================================================
+B. FEATURES LIST
+================================================================================
+[1] Multi-Language Support (20+ Indian languages)
+    - Hindi, Bengali, Telugu, Tamil, Marathi, Urdu, Gujarati, Kannada,
+      Odia, Malayalam, Punjabi, Assamese, Maithili, Meitei, Bodo,
+      Santali, Kashmiri, Nepali, Sindhi, English
+
+[2] App-Specific Modes
+    - Rapido Captain Mode (com.rapido.rider)
+    - Ola Driver Mode (com.olacabs.customer)
+    - Uber Driver Mode (com.ubercab.driver)
+    - Custom Mode (any package)
+
+[3] Auto-Click Engine
+    - 1-30ms random delay (human-like)
+    - Deep tree scanning (recursive child node search)
+    - Text + ContentDescription + HintText matching
+    - Clickable parent traversal
+    - Gesture fallback for non-clickable nodes
+
+[4] Floating Control Window
+    - Draggable overlay
+    - START / PAUSE / STOP / CANCEL buttons
+    - Real-time status display
+    - Overlay permission auto-prompt
+
+[5] Custom Keywords
+    - User-defined comma-separated trigger texts
+    - 200+ built-in keywords
+    - Case-insensitive matching
+
+[6] Smart Filtering
+    - Package name filtering (only runs on target app)
+    - Event type filtering (window content/state changes only)
+    - Cooldown protection (250ms between clicks)
+
+[7] User Authentication
+    - Login screen (AD-FREE ZONE)
+    - Signup screen (AD-FREE ZONE)
+    - Unique UID per user (UUID-based)
+    - Admin entry via version text 10-tap secret
+
+[8] Admin Panel (AD-FREE ZONE)
+    - View all registered users with UID + email
+    - Toggle ad-free override per user
+    - Clear all data
+    - Admin bypass: email="admin", password="admin123"
+
+[9] Ad Monetization (Start.io SDK)
+    - Banner ads on Main Dashboard
+    - Interstitial ads on action toggles (START/PAUSE/STOP)
+    - Exit interstitials on back press
+    - Rewarded video ads for ad-free extension
+
+[10] Ad-Free Exclusion Zones
+    - Login Screen (NO ADS)
+    - Signup Screen (NO ADS)
+    - Admin Panel (NO ADS)
+    - Active 1-Hour Trial Period (NO ADS)
+    - Users with adminAdFreeOverride=true (NO ADS)
+    - Users with active reward period (NO ADS)
+    - Users with isAdFree=true (NO ADS)
+
+[11] 10-Reward Ad Subscription Extension
+    - Watch rewarded video = +1 counter
+    - 10 videos = +24 hours ad-free access
+    - Real-time progress counter
+    - Network time verification for tamper-proof trial
+
+================================================================================
+C. FILE STRUCTURE
+================================================================================
+mama-bhutnika/
+├── app/
+│   ├── build.gradle.kts                # App-level Kotlin DSL build config
+│   ├── proguard-rules.pro              # ProGuard rules (Start.io + AndroidX)
+│   └── src/main/
+│       ├── AndroidManifest.xml         # App manifest with permissions & meta-data
+│       ├── java/com/mamabhutnika/rideaccepter/
+│       │   ├── MamaBhutnikaApp.kt     # Application class (Start.io SDK init)
+│       │   ├── UserPrefs.kt           # Centralized SharedPreferences manager
+│       │   ├── AdManager.kt           # Start.io ad lifecycle manager
+│       │   ├── TrialManager.kt        # Network time-based trial verification
+│       │   ├── LoginActivity.kt       # Login screen (AD-FREE ZONE)
+│       │   ├── SignupActivity.kt      # Signup screen (AD-FREE ZONE)
+│       │   ├── MainActivity.kt        # Dashboard with ads + reward system
+│       │   ├── AdminActivity.kt       # Admin panel (AD-FREE ZONE)
+│       │   ├── RideAccepterService.kt # Accessibility service (core engine)
+│       │   └── FloatingWindowService.kt # Draggable floating control panel
+│       └── res/
+│           ├── layout/
+│           │   ├── activity_login.xml    # Login UI
+│           │   ├── activity_signup.xml   # Signup UI
+│           │   ├── activity_main.xml     # Dashboard UI (banner + reward)
+│           │   ├── activity_admin.xml    # Admin panel UI
+│           │   └── floating_window.xml   # Floating control UI
+│           ├── values/
+│           │   ├── strings.xml         # App strings
+│           │   ├── colors.xml          # Color definitions
+│           │   └── themes.xml          # Theme definitions
+│           ├── xml/
+│           │   └── accessibility_service_config.xml  # Service config
+│           └── mipmap-*/               # Launcher icons
+├── build.gradle.kts                    # Project-level Kotlin DSL build config
+├── settings.gradle.kts                 # Gradle settings (Kotlin DSL)
+├── gradle.properties                   # Gradle properties (AndroidX)
+├── gradle/wrapper/
+│   ├── gradle-wrapper.jar              # Gradle wrapper
+│   └── gradle-wrapper.properties       # Wrapper config
+├── gradlew                             # Gradle wrapper script
+├── .github/workflows/
+│   └── build.yml                       # GitHub Actions CI/CD
+├── README.md                           # Project readme
+├── .gitignore                          # Git ignore rules
+└── project.txt                         # This file
+
+================================================================================
+D. BUILD HISTORY & FIXES
+================================================================================
+Change #1:  Initial project creation
+            Files: RideAccepterService.kt, MainActivity.kt, layouts, manifests
+
+Change #2:  Fixed deprecated PreferenceManager
+            Issue: android.preference.PreferenceManager removed in newer Android
+            Fix: Switched to androidx.preference.PreferenceManager
+
+Change #3:  Fixed deprecated Switch widget
+            Issue: android.widget.Switch crashes on some devices
+            Fix: Switched to androidx.appcompat.widget.SwitchCompat
+
+Change #4:  Fixed deprecated getColor()
+            Issue: Context.getColor() deprecated
+            Fix: Switched to ContextCompat.getColor()
+
+Change #5:  Fixed preference sync
+            Issue: Activity and Service used different SharedPreferences files
+            Fix: Both now use "mama_bhutnika_prefs"
+
+Change #6:  Cleaned duplicate ACCEPT_TEXTS
+            Issue: Duplicate Hindi variants bloated the set
+            Fix: Removed duplicates, kept unique variants
+
+Change #7:  Added node recycling
+            Issue: Memory leaks from unrecycled AccessibilityNodeInfo
+            Fix: Added proper recycle() in finally blocks
+
+Change #8:  Added gesture callbacks
+            Issue: Gesture clicks failed silently
+            Fix: Added GestureResultCallback with logging
+
+Change #9:  Added package filtering
+            Issue: Service scanned all apps unnecessarily
+            Fix: Early return if target package doesn't match
+
+Change #10: Fixed missing gradle-wrapper.jar
+            Issue: Could not find org.gradle.wrapper.GradleWrapperMain
+            Fix: Downloaded gradle-wrapper.jar (63KB)
+
+Change #11: Fixed duplicate Gradle repositories
+            Issue: allprojects block conflicted with settings.gradle
+            Fix: Removed allprojects, used PREFER_SETTINGS
+
+Change #12: Added gradle.properties with AndroidX
+            Issue: android.useAndroidX not set
+            Fix: Created gradle.properties with useAndroidX=true
+
+Change #13: Fixed AAPT adaptive-icon error
+            Issue: adaptive-icon requires API 26+, failed on older
+            Fix: Replaced with layer-list for regular mipmap folders
+
+Change #14: Removed invalid foregroundServiceType
+            Issue: 'specialUse' incompatible with compileSdk 33
+            Fix: Removed android:foregroundServiceType from manifest
+
+Change #15: Added Ola & Uber support + all image texts
+            Issue: Only Rapido supported, missing image Accept variants
+            Fix: Added Ola/Uber modes, 200+ keywords, deep scan, 1-30ms delay
+
+Change #16: Converted to Kotlin DSL (build.gradle.kts)
+            Issue: Groovy DSL less maintainable
+            Fix: Migrated all build files to Kotlin DSL
+
+Change #17: Integrated Start.io SDK v5.+
+            Issue: No monetization
+            Fix: Added Start.io SDK with App ID 207133232
+
+Change #18: Added AdManager with exclusion zones
+            Issue: Ads shown everywhere including login/signup
+            Fix: AdManager with 5 exclusion rules + gatekeeper
+
+Change #19: Added 10-Reward Ad System
+            Issue: No way for users to earn ad-free time
+            Fix: Watch 10 rewarded videos = +24h ad-free access
+
+Change #20: Added Admin Panel + UID System
+            Issue: No user management or admin controls
+            Fix: Unique UID per user, version-tap admin entry,
+                 admin can toggle ad-free for any user
+
+================================================================================
+E. TARGET PACKAGES
+================================================================================
+Rapido:  com.rapido.rider
+Ola:     com.olacabs.customer
+Uber:    com.ubercab.driver
+
+================================================================================
+F. KEYWORDS COUNT
+================================================================================
+Built-in keywords:     200+
+Language variants:     20+ Indian languages
+App-specific:          Rapido (25), Ola (20), Uber (25)
+Common UI:             50+
+Custom user keywords:  Unlimited (comma-separated)
+
+================================================================================
+G. TECHNICAL SPECIFICATIONS
+================================================================================
+Click Delay:           1-30ms (random, human-like)
+Cooldown:              250ms between clicks
+Notification Timeout:  10ms (ultra-fast response)
+Event Types:           WindowContentChanged, WindowStateChanged, ViewClicked
+Scan Depth:            Full tree recursive (all child nodes)
+Text Matching:         Exact + Contains (case-insensitive)
+Gesture Duration:      50ms (fast tap)
+Memory Management:     Proper node recycling
+
+================================================================================
+H. PERMISSIONS REQUIRED
+================================================================================
+1. INTERNET                    - Start.io SDK + network time
+2. AD_ID                     - Start.io advertising ID
+3. BLUETOOTH                 - Start.io SDK requirement
+4. ACCESS_NETWORK_STATE      - Start.io connectivity check
+5. FOREGROUND_SERVICE        - Background operation
+6. SYSTEM_ALERT_WINDOW       - Floating window overlay
+7. BIND_ACCESSIBILITY_SERVICE - Core auto-click functionality
+
+================================================================================
+I. AD LIFECYCLE RULES
+================================================================================
+AD-FREE ZONES (Never show ads):
+  - LoginActivity
+  - SignupActivity
+  - AdminActivity
+  - Active 1-hour trial period
+  - adminAdFreeOverride = true
+  - isAdFree = true
+  - Active reward period (rewardExpiryMs > current time)
+
+MANDATORY AD ZONES (Show ads if not ad-free):
+  - MainActivity banner (bottom of dashboard)
+  - Interstitial on mode toggle (Rapido/Ola/Uber switch)
+  - Interstitial on action buttons (START/PAUSE/STOP/SAVE)
+  - Exit interstitial on back press (MainActivity only)
+  - Rewarded video on "Watch Ad" button tap
+
+================================================================================
+J. GITHUB REPOSITORY
+================================================================================
+URL:     https://github.com/aalamdiwan555-art/mama-bhutnika
+Actions: https://github.com/aalamdiwan555-art/mama-bhutnika/actions
+
+================================================================================
+K. DISCLAIMER
+================================================================================
+This app is for educational purposes. Using automation on ride-hailing
+platforms may violate their Terms of Service and result in permanent account
+bans. Use at your own risk. The developers are not responsible for any
+consequences arising from the use of this application.
+
+================================================================================
+                         END OF DOCUMENTATION
+================================================================================
