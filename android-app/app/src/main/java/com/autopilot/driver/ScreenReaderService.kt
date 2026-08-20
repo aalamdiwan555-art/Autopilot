@@ -27,8 +27,10 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.roundToInt
 
 class ScreenReaderService : Service() {
+
     companion object {
         const val EXTRA_RESULT_CODE = "result_code"
         const val EXTRA_RESULT_DATA = "result_data"
@@ -61,13 +63,15 @@ class ScreenReaderService : Service() {
             .setContentText("Watching selected ride apps for new offers")
             .setOngoing(true)
             .build()
-        if (Build.VERSION.SDK_INT >= 29) startForeground(41, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
-        else startForeground(41, notification)
+        if (Build.VERSION.SDK_INT >= 29)
+            startForeground(41, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
+        else
+            startForeground(41, notification)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val resultCode = intent?.getIntExtra(EXTRA_RESULT_CODE, 0) ?: 0
-        val data = intent?.getParcelableExtra<Intent>(EXTRA_RESULT_DATA) ?: return START_NOT_STICKY
+        val data = intent?.getParcelableExtra(EXTRA_RESULT_DATA) ?: return START_NOT_STICKY
         if (projection == null) {
             val manager = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
             projection = manager.getMediaProjection(resultCode, data)
@@ -82,10 +86,12 @@ class ScreenReaderService : Service() {
         (getSystemService(WINDOW_SERVICE) as android.view.WindowManager).defaultDisplay.getRealMetrics(metrics)
         screenWidth = metrics.widthPixels
         screenHeight = metrics.heightPixels
+
         val width = screenWidth.coerceAtMost(1440)
         val height = screenHeight.coerceAtMost(2560)
         captureWidth = width
         captureHeight = height
+
         reader = ImageReader.newInstance(width, height, android.graphics.PixelFormat.RGBA_8888, 2)
         display = projection?.createVirtualDisplay(
             "AutopilotScreenReader", width, height, metrics.densityDpi,
@@ -97,7 +103,11 @@ class ScreenReaderService : Service() {
     private val captureLoop = object : Runnable {
         override fun run() {
             if (prefs.autopilotEnabled &&
-                RideAccessibilityService.foregroundPackage in setOf("com.rapido.rider", "com.olacabs.oladriver", "com.ubercab.driver", "com.ubercab")) {
+                RideAccessibilityService.foregroundPackage in setOf(
+                    "com.rapido.rider", "com.olacabs.oladriver",
+                    "com.ubercab.driver", "com.ubercab"
+                )
+            ) {
                 processLatestFrame()
             }
             handler.postDelayed(this, INTERVAL_MS)
@@ -120,7 +130,8 @@ class ScreenReaderService : Service() {
                         if (prefs.autopilotEnabled && OcrKeywords.containsAccept(result.text)) {
                             val targetBounds = findAcceptBounds(result)
                             if (targetBounds != null) {
-                                RideAccessibilityService.requestAcceptClick(mapCaptureBoundsToScreen(targetBounds))
+                                val screenBounds = mapCaptureBoundsToScreen(targetBounds)
+                                RideAccessibilityService.requestAcceptClick(screenBounds)
                             } else {
                                 RideAccessibilityService.requestAcceptClick()
                             }
@@ -145,47 +156,60 @@ class ScreenReaderService : Service() {
         val rowPadding = rowStride - pixelStride * image.width
         val paddedWidth = image.width + rowPadding / pixelStride
         val paddedBitmap = Bitmap.createBitmap(
-            paddedWidth,
-            image.height,
-            Bitmap.Config.ARGB_8888,
+            paddedWidth, image.height, Bitmap.Config.ARGB_8888
         )
         paddedBitmap.copyPixelsFromBuffer(buffer)
 
-        if (paddedWidth == image.width) {
-            return paddedBitmap
+        return if (paddedWidth == image.width) {
+            paddedBitmap
+        } else {
+            val croppedBitmap = Bitmap.createBitmap(
+                paddedBitmap, 0, 0, image.width, image.height
+            )
+            paddedBitmap.recycle()
+            croppedBitmap
         }
-
-        val croppedBitmap = Bitmap.createBitmap(
-            paddedBitmap,
-            0,
-            0,
-            image.width,
-            image.height,
-        )
-        paddedBitmap.recycle()
-        return croppedBitmap
     }
 
+    /**
+     * FIXED: Instead of returning the first match, collect every match and
+     * pick the *smallest* bounding box. A single "Accept" line is more
+     * precise than a massive text block that happens to contain the word.
+     */
     private fun findAcceptBounds(result: Text): Rect? {
-        val lines = result.textBlocks.flatMap { it.lines }
-        return lines.firstOrNull { OcrKeywords.containsAccept(it.text) }?.boundingBox
-            ?: result.textBlocks.firstOrNull { OcrKeywords.containsAccept(it.text) }?.boundingBox
+        val matches = mutableListOf<Rect>()
+
+        for (block in result.textBlocks) {
+            for (line in block.lines) {
+                if (OcrKeywords.containsAccept(line.text)) {
+                    line.boundingBox?.let { matches.add(it) }
+                }
+            }
+            if (OcrKeywords.containsAccept(block.text)) {
+                block.boundingBox?.let { matches.add(it) }
+            }
+        }
+        // Smallest area = most precise target
+        return matches.minByOrNull { it.width() * it.height() }
     }
 
+    /**
+     * FIXED: Use roundToInt() instead of toInt() so we don't drift by a pixel.
+     * Also clamp the result so it can never be negative or larger than the screen.
+     */
     private fun mapCaptureBoundsToScreen(bounds: Rect): Rect {
-        if (captureWidth <= 0 || captureHeight <= 0 ||
-            screenWidth <= 0 || screenHeight <= 0
-        ) {
+        if (captureWidth <= 0 || captureHeight <= 0 || screenWidth <= 0 || screenHeight <= 0) {
             return Rect(bounds)
         }
         val scaleX = screenWidth.toFloat() / captureWidth
         val scaleY = screenHeight.toFloat() / captureHeight
-        return Rect(
-            (bounds.left * scaleX).toInt(),
-            (bounds.top * scaleY).toInt(),
-            (bounds.right * scaleX).toInt(),
-            (bounds.bottom * scaleY).toInt(),
-        )
+
+        val left   = (bounds.left   * scaleX).roundToInt().coerceIn(0, screenWidth)
+        val top    = (bounds.top    * scaleY).roundToInt().coerceIn(0, screenHeight)
+        val right  = (bounds.right  * scaleX).roundToInt().coerceIn(0, screenWidth)
+        val bottom = (bounds.bottom * scaleY).roundToInt().coerceIn(0, screenHeight)
+
+        return Rect(left, top, right, bottom)
     }
 
     private fun createChannel() {
