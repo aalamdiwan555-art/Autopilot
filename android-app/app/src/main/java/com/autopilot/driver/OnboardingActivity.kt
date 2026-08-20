@@ -32,7 +32,7 @@ class OnboardingActivity : AppCompatActivity() {
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             prefs.captureGranted = true
         } else {
-            Toast.makeText(this, "Screen capture is required to read ride details.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Screen capture can be enabled when you start Autopilot.", Toast.LENGTH_SHORT).show()
         }
         refresh()
     }
@@ -163,7 +163,11 @@ class OnboardingActivity : AppCompatActivity() {
             setPadding(0, dp(3), 0, 0)
         })
         card.addView(copy, LinearLayout.LayoutParams(0, -2, 1f))
-        val status = TextView(this).apply { textSize = 22f; gravity = Gravity.CENTER }
+        val status = TextView(this).apply {
+            textSize = 22f
+            gravity = Gravity.CENTER
+            tag = title
+        }
         card.addView(status, LinearLayout.LayoutParams(dp(32), dp(40)))
         rows += Triple(status, check, required)
         parent.addView(card, LinearLayout.LayoutParams(-1, dp(78)).apply { setMargins(0, 0, 0, dp(10)) })
@@ -174,7 +178,8 @@ class OnboardingActivity : AppCompatActivity() {
             val granted = runCatching { check() }.getOrDefault(false)
             status.text = if (granted) "✓" else "›"
             status.setTextColor(color(if (granted) R.color.autopilot_success else R.color.autopilot_muted))
-            status.contentDescription = if (granted) "$title ready" else "Open $title setup"
+            val itemTitle = status.tag as? String ?: "Setup item"
+            status.contentDescription = if (granted) "$itemTitle ready" else "Open $itemTitle setup"
         }
         continueButton.isEnabled = rows
             .filter { it.third }

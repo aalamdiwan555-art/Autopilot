@@ -140,9 +140,30 @@ class ScreenReaderService : Service() {
     private fun imageToBitmap(image: android.media.Image): Bitmap {
         val plane = image.planes[0]
         val buffer: ByteBuffer = plane.buffer
-        val bitmap = Bitmap.createBitmap(image.width, image.height, Bitmap.Config.ARGB_8888)
-        bitmap.copyPixelsFromBuffer(buffer)
-        return bitmap
+        val pixelStride = plane.pixelStride
+        val rowStride = plane.rowStride
+        val rowPadding = rowStride - pixelStride * image.width
+        val paddedWidth = image.width + rowPadding / pixelStride
+        val paddedBitmap = Bitmap.createBitmap(
+            paddedWidth,
+            image.height,
+            Bitmap.Config.ARGB_8888,
+        )
+        paddedBitmap.copyPixelsFromBuffer(buffer)
+
+        if (paddedWidth == image.width) {
+            return paddedBitmap
+        }
+
+        val croppedBitmap = Bitmap.createBitmap(
+            paddedBitmap,
+            0,
+            0,
+            image.width,
+            image.height,
+        )
+        paddedBitmap.recycle()
+        return croppedBitmap
     }
 
     private fun findAcceptBounds(result: Text): Rect? {
