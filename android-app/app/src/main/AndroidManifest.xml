@@ -13,23 +13,27 @@
         android:label="@string/app_name"
         android:allowBackup="false"
         android:supportsRtl="true">
+
+        <!-- Set LoginActivity as the main entry point -->
         <activity
-            android:name=".OnboardingActivity"
+            android:name=".LoginActivity"
             android:exported="true"
-            android:launchMode="singleTask">
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".OnboardingActivity" android:exported="false" />
         <activity android:name=".MainActivity" android:exported="false" />
-        <activity android:name=".LoginActivity" android:exported="false" android:launchMode="singleTask" />
         <activity android:name=".SignupActivity" android:exported="false" android:launchMode="singleTop" />
         <activity android:name=".ForgotPasswordActivity" android:exported="false" android:launchMode="singleTop" />
-        <!-- The authenticated dashboard and admin console still use the
-             shared API/session implementation in the legacy package. -->
+
+        <!-- Legacy package activities -->
         <activity android:name="com.mamabhutnika.rideaccepter.MainActivity" android:exported="false" />
         <activity android:name="com.mamabhutnika.rideaccepter.AdminActivity" android:exported="false" />
+
         <service
             android:name=".RideAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
@@ -42,6 +46,7 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+
         <service
             android:name=".ScreenReaderService"
             android:foregroundServiceType="mediaProjection"
