@@ -205,7 +205,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun validateExistingSession() {
 
-        if (sessionCheckStarted) {
+        if (sessionCheckStarted || loginInProgress) {
             return
         }
 
@@ -294,6 +294,9 @@ class LoginActivity : AppCompatActivity() {
         prefs.applyRemoteUser(
             result.user
         )
+
+        // Ensure onboarded state is marked true upon explicit successful login
+        AppPrefs(this).onboarded = true
     }
 
     private fun openHome(
@@ -315,16 +318,6 @@ class LoginActivity : AppCompatActivity() {
         }
 
         navigationStarted = true
-
-        /*
-         * IMPORTANT:
-         *
-         * UserPrefs is used for authentication/session.
-         * AppPrefs is used only for onboarding state.
-         *
-         * First-time users go through onboarding.
-         * Existing onboarded users go directly to their destination.
-         */
 
         val targetActivity: Class<*> = when {
 
@@ -396,9 +389,6 @@ class LoginActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-
-        navigationStarted = true
-
         super.onDestroy()
     }
 
