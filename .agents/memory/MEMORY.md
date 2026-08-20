@@ -1,2 +1,3 @@
+- [GitHub imports](github-imports.md) — preserve existing remote history by fetching and merging before pushing imported workspace changes.
 - [Supabase server-key compatibility](supabase-key-compatibility.md) — validate the active server key against Auth admin before relying on account mutations.
 - [Android build environment](android-build-environment.md) — native APK builds require an Android SDK and sdk.dir/ANDROID_HOME in this workspace.
