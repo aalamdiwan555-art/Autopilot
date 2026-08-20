@@ -295,8 +295,8 @@ class LoginActivity : AppCompatActivity() {
             result.user
         )
 
-        // Ensure onboarded state is marked true upon explicit successful login
-        AppPrefs(this).onboarded = true
+        // Keep first-time users in onboarding until they complete setup.
+        // Logging in and completing device permissions are separate steps.
     }
 
     private fun openHome(

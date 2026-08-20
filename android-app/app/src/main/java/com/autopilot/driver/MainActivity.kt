@@ -185,7 +185,7 @@ class MainActivity : AppCompatActivity() {
     private fun refreshState() {
         val accessibility = RideAccessibilityService.isEnabled(this)
         val capture = prefs.captureGranted
-        val ready = accessibility && capture && overlayAllowed()
+        val ready = accessibility && capture && overlayAllowed() && notificationGranted()
         val running = prefs.autopilotEnabled && ScreenReaderService.isRunning
         statusTitle.text = if (running) "Autopilot is running" else "Ready when you are"
         statusCopy.text = when {
@@ -214,7 +214,11 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Autopilot paused.", Toast.LENGTH_SHORT).show()
             return
         }
-        if (!RideAccessibilityService.isEnabled(this) || !overlayAllowed() || !prefs.captureGranted) {
+        if (!RideAccessibilityService.isEnabled(this) ||
+            !overlayAllowed() ||
+            !prefs.captureGranted ||
+            !notificationGranted()
+        ) {
             Toast.makeText(this, "Review the highlighted setup items first.", Toast.LENGTH_LONG).show()
             return
         }

@@ -31,16 +31,6 @@ class OnboardingActivity : AppCompatActivity() {
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             prefs.captureGranted = true
-            prefs.autopilotEnabled = true
-            val serviceIntent = Intent(this, ScreenReaderService::class.java).apply {
-                putExtra(ScreenReaderService.EXTRA_RESULT_CODE, result.resultCode)
-                putExtra(ScreenReaderService.EXTRA_RESULT_DATA, result.data)
-            }
-            if (Build.VERSION.SDK_INT >= 26) {
-                androidx.core.content.ContextCompat.startForegroundService(this, serviceIntent)
-            } else {
-                startService(serviceIntent)
-            }
         } else {
             Toast.makeText(this, "Screen capture is required to read ride details.", Toast.LENGTH_SHORT).show()
         }
@@ -103,7 +93,7 @@ class OnboardingActivity : AppCompatActivity() {
             { openOverlay() }, { Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(this) })
         permissionRow(column, "Screen Capture", "Requested when you start Autopilot", android.R.drawable.ic_menu_camera,
             { requestCapture() }, { prefs.captureGranted }, required = false)
-        permissionRow(column, "Notification Access", "To detect new ride notifications", android.R.drawable.ic_dialog_info,
+        permissionRow(column, "Notifications", "To keep the running service visible and reliable", android.R.drawable.ic_dialog_info,
             { requestNotifications() }, { notificationGranted() })
         permissionRow(column, "Internet", "For ads and subscription", android.R.drawable.ic_menu_upload,
             { }, { true }, required = false)
@@ -146,7 +136,11 @@ class OnboardingActivity : AppCompatActivity() {
             background = ContextCompat.getDrawable(this@OnboardingActivity, R.drawable.bg_permission)
             isClickable = true
             contentDescription = "$title setup"
-            setOnClickListener { action() }
+            setOnClickListener {
+                if (!check()) {
+                    action()
+                }
+            }
         }
         val image = ImageView(this).apply {
             setImageResource(icon)
@@ -180,6 +174,7 @@ class OnboardingActivity : AppCompatActivity() {
             val granted = runCatching { check() }.getOrDefault(false)
             status.text = if (granted) "✓" else "›"
             status.setTextColor(color(if (granted) R.color.autopilot_success else R.color.autopilot_muted))
+            status.contentDescription = if (granted) "$title ready" else "Open $title setup"
         }
         continueButton.isEnabled = rows
             .filter { it.third }
