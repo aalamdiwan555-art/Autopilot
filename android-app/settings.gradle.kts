@@ -10,7 +10,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://maven.startapp.com/artifactory/libs-release' } // ye line add ki
+        maven("https://maven.startapp.com/artifactory/libs-release") // <-- ye line badli
     }
 }
 rootProject.name = "Autopilot"
