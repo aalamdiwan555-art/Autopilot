@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.autopilot.app"
+    namespace = "com.mamabhutnika.rideaccepter"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.autopilot.app"
+        applicationId = "com.mamabhutnika.rideaccepter"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
